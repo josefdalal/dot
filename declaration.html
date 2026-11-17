@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>הכרזה בארבעים מנגנונים</title>
+<title>הכרזה בשמונים מנגנונים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
@@ -39,6 +39,7 @@ h2.set span{font-weight:400;font-stretch:100%;font-size:14px;color:var(--mute);m
 .tag{font-size:11px;line-height:1;padding:4px 8px 3px;border-radius:10px;color:#fff;background:var(--c);align-self:center}
 .en{color:var(--mute);font-size:12px;direction:ltr;margin-inline-start:auto;white-space:nowrap}
 .desc{color:var(--mute);font-size:12.5px;margin-top:3px;line-height:1.5;padding-inline-start:36px}
+.mix{color:var(--ink);opacity:.55;font-size:11.5px}
 .card:hover .name{text-decoration:underline;text-underline-offset:3px}
 .pending{opacity:.35}
 
@@ -69,7 +70,7 @@ h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:
 <header>
   <div>
     <h1>הכרזה</h1>
-    <div class="sub">הצילום של הכרזת המדינה, 14 במאי 1948, נצרב בארבעים מנגנוני נקודות. הסדרה הראשונה היא עשרים המנגנונים של הנקודות. השנייה היא מחקר: פיזיקה, צמיחה אורגנית, גלקסיות, מתמטיקה ודחיסה. מעבר עם העכבר על תמונה מראה את המקור מתחתיה.<br>
+    <div class="sub">הצילום של הכרזת המדינה, 14 במאי 1948, נצרב בשמונים מנגנוני נקודות. הסדרה הראשונה היא עשרים המנגנונים של הנקודות. השנייה היא מחקר: פיזיקה, צמיחה אורגנית, גלקסיות, מתמטיקה ודחיסה. השלישית מכליאה ביניהם, בלי התחייבות לקריאות. מעבר עם העכבר על תמונה מראה את המקור מתחתיה.<br>
     מקור: <a href="https://commons.wikimedia.org/wiki/File:Declaration_of_State_of_Israel_1948.jpg" target="_blank" rel="noopener">Wikimedia Commons</a></div>
   </div>
   <div class="controls">
@@ -86,6 +87,8 @@ h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:
 <main class="grid" id="grid1"></main>
 <h2 class="set" id="set2">סדרה ב<span>מחקר: עשרים מנגנונים חדשים</span></h2>
 <main class="grid" id="grid2"></main>
+<h2 class="set" id="set3">סדרה ג<span>הכלאות: זוגות, שלשות, רביעיות וחיבורים לא הגיוניים</span></h2>
+<main class="grid" id="grid3"></main>
 
 <div id="view">
   <aside id="panel"></aside>
@@ -611,15 +614,342 @@ const DEFS2 = [
     return out; } }
 ];
 
+/* ===== סדרה ג: הכלאות. שלבים שמחברים מנגנונים ===== */
+const GW = 320;
+function Fnew(gw = GW) { const gh = Math.max(2, Math.round(gw * H / W)); return { gw, gh, c: W / gw, a: new Float32Array(gw * gh) }; }
+const Fphoto = (gw = GW) => toneGrid(gw);
+const Fclone = f => ({ gw: f.gw, gh: f.gh, c: f.c, a: Float32Array.from(f.a) });
+function Fnorm(f, plo = 0.01, phi = 0.99) { const s = Array.from(f.a.filter((v, i) => i % 3 === 0)).sort((a, b) => a - b), lo = s[Math.floor(s.length * plo)], hi = s[Math.floor(s.length * phi)], d = (hi - lo) || 1; for (let i = 0; i < f.a.length; i++) f.a[i] = clamp((f.a[i] - lo) / d, 0, 1); return f; }
+function Fmap(f, fn) { const o = Fnew(f.gw); for (let j = 0; j < o.gh; j++) for (let i = 0; i < o.gw; i++) { const q = j * o.gw + i; o.a[q] = fn(f.a[q], (i + 0.5) * o.c, (j + 0.5) * o.c, q, i, j); } return o; }
+const Fwarp = (f, inv) => Fmap(f, (v, x, y) => { const [sx, sy] = inv(x, y); return inside(sx, sy) ? gsample(f, sx, sy) : 0; });
+const Fblur = (f, r) => { const o = Fclone(f); o.a = boxBlurGrid(f.a, f.gw, f.gh, r); return o; };
+const Fresize = (f, gw) => { const o = Fnew(gw); for (let j = 0; j < o.gh; j++) for (let i = 0; i < o.gw; i++) o.a[j * gw + i] = gsample(f, (i + 0.5) * o.c, (j + 0.5) * o.c); return o; };
+function Ffull(f) { const out = new Float32Array(W * H); for (let y = 0; y < H; y++) { const fy = (y + 0.5) / f.c - 0.5; for (let x = 0; x < W; x++) out[y * W + x] = bilin(f.a, f.gw, f.gh, (x + 0.5) / f.c - 0.5, fy); } return out; }
+// מחליף לרגע את הצילום בשדה אחר, כך שכל מנגנון קיים יכול לצרוב אותו
+function withField(f, fn) {
+  const s0 = [TONE, IT, IL, IL2], full = Ffull(f), lum = new Float32Array(W * H), sq = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) { lum[i] = 1 - full[i]; sq[i] = lum[i] * lum[i]; }
+  TONE = full; IT = integral(full); IL = integral(lum); IL2 = integral(sq);
+  try { return fn(); } finally { [TONE, IT, IL, IL2] = s0; }
+}
+const DEFBY = id => DEFS.concat(DEFS2).find(d => d.id === id);
+const runGen = (id, over, R, k, N) => { const d = DEFBY(id); return d.gen(Object.assign(defaults(d), over || {}), R, k, N); };
+const renderWith = (f, id, over, R, k, N) => withField(f, () => runGen(id, over, R, k, N));
+const hexFrom = (f, s) => hexDots(s, (x, y) => clamp(gsample(f, x, y), 0, 1.1));
+function cellDots(f, test, rad) { const out = []; for (let j = 0; j < f.gh; j++) for (let i = 0; i < f.gw; i++) { const q = j * f.gw + i, v = f.a[q]; if (test(v, q)) out.push([(i + 0.5) * f.c, (j + 0.5) * f.c, rad(v, q), clamp(v, 0, 1)]); } return out; }
+
+// פורייה
+const _dt = {}; function dctTab(n) { if (_dt[n]) return _dt[n]; const t = new Float32Array(n * n); for (let u = 0; u < n; u++) for (let x = 0; x < n; x++) t[u * n + x] = Math.cos(Math.PI / n * (x + 0.5) * u) * Math.sqrt((u ? 2 : 1) / n); return _dt[n] = t; }
+function Fdct(f) { const { gw, gh, a } = f, Tx = dctTab(gw), Ty = dctTab(gh), tmp = new Float32Array(gw * gh), C = new Float32Array(gw * gh);
+  for (let y = 0; y < gh; y++) for (let u = 0; u < gw; u++) { let s = 0; for (let x = 0; x < gw; x++) s += a[y * gw + x] * Tx[u * gw + x]; tmp[y * gw + u] = s; }
+  for (let u = 0; u < gw; u++) for (let v = 0; v < gh; v++) { let s = 0; for (let y = 0; y < gh; y++) s += tmp[y * gw + u] * Ty[v * gh + y]; C[v * gw + u] = s; }
+  return C; }
+function Fidct(C, gw, gh) { const Tx = dctTab(gw), Ty = dctTab(gh), tmp = new Float32Array(gw * gh), o = Fnew(gw);
+  for (let u = 0; u < gw; u++) for (let y = 0; y < gh; y++) { let s = 0; for (let v = 0; v < gh; v++) s += C[v * gw + u] * Ty[v * gh + y]; tmp[y * gw + u] = s; }
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { let s = 0; for (let u = 0; u < gw; u++) s += tmp[y * gw + u] * Tx[u * gw + x]; o.a[y * gw + x] = s; }
+  return o; }
+function Flow(f, freq) { const C = Fdct(f); for (let v = 0; v < f.gh; v++) for (let u = 0; u < f.gw; u++) if (u + v * f.gw / f.gh >= freq) C[v * f.gw + u] = 0; return Fidct(C, f.gw, f.gh); }
+function Fhigh(f, freq, signed = false) { const lo = Flow(f, freq), o = Fmap(f, (v, x, y, q) => v - lo.a[q]); if (signed) return o; for (let i = 0; i < o.a.length; i++) o.a[i] = Math.abs(o.a[i]); return Fnorm(o, 0.02, 0.995); }
+function Fspectrum(f) { const C = Fdct(f), o = Fnew(f.gw); for (let j = 0; j < o.gh; j++) for (let i = 0; i < o.gw; i++) { const u = Math.min(f.gw - 1, Math.abs(i - o.gw / 2) * 2 | 0), v = Math.min(f.gh - 1, Math.abs(j - o.gh / 2) * 2 | 0); o.a[j * o.gw + i] = Math.log(1 + Math.abs(C[v * f.gw + u]) * 60); } return Fnorm(o, 0.02, 0.999); }
+function Fscramble(f, R) { const C = Fdct(f); for (let q = 1; q < C.length; q++) if (R() < 0.5) C[q] = -C[q]; return Fnorm(Fidct(C, f.gw, f.gh)); }
+// פירוק לערכים סינגולריים בשיטת החזקה
+function Fsvd(f, rank, R) { const { gw, gh } = f, A = Float32Array.from(f.a), rec = Fnew(gw), U = [], Vv = [], Sg = [];
+  for (let q = 0; q < rank; q++) { const v = new Float32Array(gw).map(() => R() - 0.5), u = new Float32Array(gh); let sig = 0;
+    for (let it = 0; it < 25; it++) { for (let y = 0; y < gh; y++) { let s = 0; for (let x = 0; x < gw; x++) s += A[y * gw + x] * v[x]; u[y] = s; } let nu = 0; for (let y = 0; y < gh; y++) nu += u[y] * u[y]; nu = Math.sqrt(nu) || 1; for (let y = 0; y < gh; y++) u[y] /= nu;
+      for (let x = 0; x < gw; x++) { let s = 0; for (let y = 0; y < gh; y++) s += A[y * gw + x] * u[y]; v[x] = s; } sig = 0; for (let x = 0; x < gw; x++) sig += v[x] * v[x]; sig = Math.sqrt(sig) || 1; for (let x = 0; x < gw; x++) v[x] /= sig; }
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const d = sig * u[y] * v[x]; rec.a[y * gw + x] += d; A[y * gw + x] -= d; } U.push(u); Vv.push(v); Sg.push(sig); }
+  return { rec, U, V: Vv, S: Sg }; }
+// איזינג כללי: שדה חיצוני, צימוד לכל אתר וטמפרטורה לכל אתר
+function Fising(ext, o, R) { const { gw, gh } = ext, N = gw * gh, s = new Int8Array(N);
+  for (let q = 0; q < N; q++) s[q] = (o.seedThr != null ? ext.a[q] > o.seedThr : R() < ext.a[q]) ? 1 : -1;
+  for (let sw = 0; sw < o.sweeps; sw++) for (let par = 0; par < 2; par++) for (let j = 0; j < gh; j++) for (let i = (j + par) & 1; i < gw; i += 2) {
+    const q = j * gw + i, Jq = o.J ? o.J[q] : 1; let nb = 0; const add = n => { nb += (o.J ? Jq * o.J[n] : 1) * s[n]; };
+    if (i > 0) add(q - 1); if (i < gw - 1) add(q + 1); if (j > 0) add(q - gw); if (j < gh - 1) add(q + gw);
+    const T_ = o.T ? o.T[q] : o.temp, dE = 2 * s[q] * (nb + (o.field ?? 1.6) * (2 * ext.a[q] - 1)); if (dE <= 0 || R() < Math.exp(-dE / T_)) s[q] = -s[q]; }
+  const out = Fnew(gw); for (let q = 0; q < N; q++) out.a[q] = s[q] > 0 ? 1 : 0; return out; }
+// אוטומט תאי. rule(q) מחזיר [מסכת לידה, מסכת הישרדות]
+function Flife(f, gens, R, o = {}) { const { gw, gh } = f, N = gw * gh; let A = new Uint8Array(N), B = new Uint8Array(N);
+  for (let q = 0; q < N; q++) A[q] = (o.thr != null ? f.a[q] > o.thr : f.a[q] > R()) ? 1 : 0;
+  const BS = [new Uint8Array(9), new Uint8Array(9)]; BS[0][3] = 1; BS[1][2] = BS[1][3] = 1;
+  for (let g = 0; g < gens; g++) { for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const x = i + dx, y = j + dy; if (x >= 0 && y >= 0 && x < gw && y < gh) n += A[y * gw + x]; } const q = j * gw + i, r = o.rule ? o.rule(q) : BS; B[q] = A[q] ? r[1][n] : r[0][n]; } const t = A; A = B; B = t; }
+  const out = Fnew(gw); for (let q = 0; q < N; q++) out.a[q] = A[q]; return out; }
+// גריי סקוט על רשת, עם זרעים כגושים
+function Fturing(g, o, R) { const { gw, gh } = g, N = gw * gh; let U = new Float32Array(N).fill(1), V = new Float32Array(N), U2 = new Float32Array(N), V2 = new Float32Array(N);
+  const blob = (ci, cj) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = clamp(ci + dx, 1, gw - 2), y = clamp(cj + dy, 1, gh - 2), q = y * gw + x; U[q] = 0.5; V[q] = 0.25 + R() * 0.1; } };
+  if (o.seeds) for (const [x, y] of o.seeds) blob((x / g.c) | 0, (y / g.c) | 0); else for (let b = 0; b < (o.nb || 600); b++) blob(2 + Math.floor(R() * (gw - 4)), 2 + Math.floor(R() * (gh - 4)));
+  const F = new Float32Array(N), K = new Float32Array(N); for (let q = 0; q < N; q++) { const fk = o.FK(q); F[q] = fk[0]; K[q] = fk[1]; }
+  U2.set(U); V2.set(V);
+  for (let s = 0; s < o.steps; s++) { for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const q = j * gw + i, u = U[q], v = V[q];
+      const lu = -u + 0.2 * (U[q - 1] + U[q + 1] + U[q - gw] + U[q + gw]) + 0.05 * (U[q - gw - 1] + U[q - gw + 1] + U[q + gw - 1] + U[q + gw + 1]);
+      const lv = -v + 0.2 * (V[q - 1] + V[q + 1] + V[q - gw] + V[q + gw]) + 0.05 * (V[q - gw - 1] + V[q - gw + 1] + V[q + gw - 1] + V[q + gw + 1]);
+      const uvv = u * v * v; U2[q] = u + lu - uvv + F[q] * (1 - u); V2[q] = v + 0.5 * lv + uvv - (F[q] + K[q]) * v; }
+    let t = U; U = U2; U2 = t; t = V; V = V2; V2 = t; }
+  const out = Fnew(gw); out.a.set(V); return out; }
+// ריר מוך על שדה מזון כללי
+function Fphysarum(food, o, R) { const { gw, gh } = food, N = gw * gh; let trail = new Float32Array(N); const fd = Float32Array.from(food.a, v => v * (o.food ?? 8));
+  const n = o.agents || 20000, ax = new Float32Array(n), ay = new Float32Array(n), aa = new Float32Array(n); for (let i = 0; i < n; i++) { ax[i] = R() * gw; ay[i] = R() * gh; aa[i] = R() * TAU; }
+  const SA = (o.sa ?? 30) * Math.PI / 180, RA = (o.ra ?? 25) * Math.PI / 180, SD = o.sd ?? 4;
+  const sense = (x, y) => { const i = x | 0, j = y | 0; if (i < 0 || j < 0 || i >= gw || j >= gh) return -1; const q = j * gw + i; return trail[q] + fd[q]; };
+  for (let s = 0; s < (o.steps || 80); s++) { for (let i = 0; i < n; i++) { const a = aa[i], x = ax[i], y = ay[i], f = sense(x + Math.cos(a) * SD, y + Math.sin(a) * SD), l = sense(x + Math.cos(a - SA) * SD, y + Math.sin(a - SA) * SD), r = sense(x + Math.cos(a + SA) * SD, y + Math.sin(a + SA) * SD);
+      if (f >= l && f >= r) { } else if (l > r) aa[i] -= RA; else if (r > l) aa[i] += RA; else aa[i] += R() < 0.5 ? -RA : RA;
+      let nx = x + Math.cos(aa[i]), ny = y + Math.sin(aa[i]); if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) { aa[i] = R() * TAU; nx = clamp(nx, 0, gw - 0.01); ny = clamp(ny, 0, gh - 0.01); } ax[i] = nx; ay[i] = ny; trail[(ny | 0) * gw + (nx | 0)] += 5; }
+    trail = boxBlurGrid(trail, gw, gh, 1); for (let q = 0; q < N; q++) trail[q] *= 0.9; }
+  const out = Fnew(gw); out.a.set(trail); return Fnorm(out, 0.05, 0.97); }
+function Fpixelsort(f, lo, hi, dir = 0, order = 0) { const o = Fclone(f), t = o.a, { gw, gh } = o, lines = dir === 0 ? gh : gw, len = dir === 0 ? gw : gh, at = (l, q) => dir === 0 ? l * gw + q : q * gw + l;
+  for (let l = 0; l < lines; l++) { let q = 0; while (q < len) { if (t[at(l, q)] < lo || t[at(l, q)] > hi) { q++; continue; } let e = q; while (e < len && t[at(l, e)] >= lo && t[at(l, e)] <= hi) e++; const run = []; for (let z = q; z < e; z++) run.push(t[at(l, z)]); run.sort((a, b) => order ? a - b : b - a); for (let z = q; z < e; z++) t[at(l, z)] = run[z - q]; q = e; } }
+  return o; }
+function Fsplat(pts, gw, blur) { const o = Fnew(gw); for (const [x, y, r] of pts) { const i = (x / o.c) | 0, j = (y / o.c) | 0; if (i >= 0 && j >= 0 && i < o.gw && j < o.gh) o.a[j * o.gw + i] += r * r; } o.a = boxBlurGrid(boxBlurGrid(o.a, o.gw, o.gh, blur), o.gw, o.gh, blur); return Fnorm(o, 0.02, 0.98); }
+function Fquasi(gw, sym, lam) { const o = Fnew(gw), K = TAU / lam; for (let j = 0; j < o.gh; j++) for (let i = 0; i < o.gw; i++) { const x = (i + 0.5) * o.c, y = (j + 0.5) * o.c; let v = 0; for (let q = 0; q < sym; q++) { const a = Math.PI * q / sym; v += Math.cos(K * (x * Math.cos(a) + y * Math.sin(a))); } o.a[j * o.gw + i] = v / sym; } return o; }
+function Fchladni(f, nmax, mmax, plates) { const Pv = Math.max(1, Math.round(plates * H / W)); return Fmap(f, (t, x, y) => { const n = 1 + Math.floor(t * nmax), m = 1 + Math.floor((1 - t) * mmax), u = (x / W * plates) % 1 * Math.PI, v = (y / H * Pv) % 1 * Math.PI, z = Math.cos(n * u) * Math.cos(m * v) - Math.cos(m * u) * Math.cos(n * v); return 1 - clamp(Math.abs(z) / 0.35, 0, 1); }); }
+
+// עיוותים הפוכים: לכל נקודת פלט, מאיפה לדגום
+const lensInv = (L, e2) => (x, y) => { let bx = x, by = y; for (const [lx, ly, w] of L) { const dx = x - lx, dy = y - ly, d2 = dx * dx + dy * dy + 1; bx -= e2 * (w ?? 1) * dx / d2; by -= e2 * (w ?? 1) * dy / d2; } return [bx, by]; };
+const rotInv = (twist, core, pw, cx, cy) => (x, y) => { const dx = x - cx, dy = y - cy, r = Math.hypot(dx, dy), a = -twist * Math.pow(core / (r + core), pw), ca = Math.cos(a), sa = Math.sin(a); return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; };
+const drosteInv = (scale, cx, cy) => { const Lg = Math.log(scale), kk = Lg / TAU, l0 = Math.log(Math.hypot(W, H) / 2); return (x, y) => { const zx = x - cx, zy = y - cy, rr = Math.hypot(zx, zy) || 1e-3, a = Math.log(rr), b = Math.atan2(zy, zx); let na = a + b * kk; const nb = b - a * kk; na = na - Lg * Math.floor((na - (l0 - Lg)) / Lg); const m = Math.exp(na); return [cx + m * Math.cos(nb), cy + m * Math.sin(nb)]; }; };
+
+// פעולות על נקודות
+function Padvect(pts, stepsOf, k, N, scale = 2.2) { const f = scale / 300, e = 0.01, st = 2 * k, out = [];
+  for (let i = 0; i < pts.length; i++) { let [x, y, r, t] = pts[i]; const n = stepsOf(pts[i], i); for (let s = 0; s < n; s++) { const X = x * f, Y = y * f; x += (N(X, Y + e) - N(X, Y - e)) / (2 * e) * st; y -= (N(X + e, Y) - N(X - e, Y)) / (2 * e) * st; } if (inside(x, y, r)) out.push([x, y, r, t]); }
+  return out; }
+function Pcollapse(pts, steps, smooth, pull) { const X = pts.map(p => p[0]), Y = pts.map(p => p[1]), n = pts.length, gw = 240, c = W / gw, gh = Math.ceil(H / c), rad = Math.max(1, Math.round(smooth / c));
+  for (let st = 0; st < steps; st++) { let d = new Float32Array(gw * gh); for (let i = 0; i < n; i++) { const gi = clamp((X[i] / c) | 0, 0, gw - 1), gj = clamp((Y[i] / c) | 0, 0, gh - 1); d[gj * gw + gi]++; }
+    d = boxBlurGrid(boxBlurGrid(d, gw, gh, rad), gw, gh, rad); let gm = 1e-6; const GX = new Float32Array(gw * gh), GY = new Float32Array(gw * gh);
+    for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const q = j * gw + i; GX[q] = d[q + 1] - d[q - 1]; GY[q] = d[q + gw] - d[q - gw]; gm = Math.max(gm, Math.hypot(GX[q], GY[q])); }
+    for (let i = 0; i < n; i++) { const fx = X[i] / c - 0.5, fy = Y[i] / c - 0.5; X[i] += pull * c * 6 * bilin(GX, gw, gh, fx, fy) / gm; Y[i] += pull * c * 6 * bilin(GY, gw, gh, fx, fy) / gm; } }
+  const out = []; for (let i = 0; i < n; i++) if (inside(X[i], Y[i])) out.push([X[i], Y[i], pts[i][2], pts[i][3]]); return out; }
+function Pwarp(pts, fn) { const out = []; for (const p of pts) { const [x, y] = fn(p[0], p[1], p); if (inside(x, y, p[2])) out.push([x, y, p[2], p[3]]); } return out; }
+// סדקי וורונוי בין זרעים
+function worley(SX, SY, step, width) { const n = SX.length; if (n < 3) return []; const cs = Math.sqrt(W * H / n) * 1.2, cols = Math.ceil(W / cs), rows = Math.ceil(H / cs), head = new Int32Array(cols * rows).fill(-1), next = new Int32Array(n);
+  for (let i = 0; i < n; i++) { const ci = clamp((SX[i] / cs) | 0, 0, cols - 1) + clamp((SY[i] / cs) | 0, 0, rows - 1) * cols; next[i] = head[ci]; head[ci] = i; }
+  const out = [];
+  for (let y = step / 2; y < H; y += step) for (let x = step / 2; x < W; x += step) { const cx = Math.min(cols - 1, (x / cs) | 0), cy = Math.min(rows - 1, (y / cs) | 0); let d1 = 1e18, d2 = 1e18;
+    for (let rad = 1; rad < 8; rad++) { for (let yy = cy - rad; yy <= cy + rad; yy++) { if (yy < 0 || yy >= rows) continue; for (let xx = cx - rad; xx <= cx + rad; xx++) { if (xx < 0 || xx >= cols || (rad > 1 && Math.abs(yy - cy) < rad && Math.abs(xx - cx) < rad)) continue; for (let q = head[yy * cols + xx]; q >= 0; q = next[q]) { const d = (SX[q] - x) ** 2 + (SY[q] - y) ** 2; if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; } } } if (d2 < 1e17 && Math.sqrt(d2) < (rad - 0.5) * cs) break; }
+    if (d2 < 1e17 && Math.sqrt(d2) - Math.sqrt(d1) < width(x, y)) out.push([x, y, step * 0.52, T(x, y)]); }
+  return out; }
+function traceFlow(angle, d, len, R, size) { const G = new Grid(d * 2), out = [], seeds = [];
+  for (let y = d / 2; y < H; y += d * 1.5) for (let x = d / 2; x < W; x += d * 1.5) seeds.push([x + (R() - 0.5) * d, y + (R() - 0.5) * d]);
+  for (let i = seeds.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [seeds[i], seeds[j]] = [seeds[j], seeds[i]]; }
+  for (const [sx, sy] of seeds) { if (out.length >= CAP || !G.fits(sx, sy, d / 2, 0)) continue; const add = (x, y) => { G.add(x, y, d / 2); const r = size(x, y); if (r > 0.2) out.push([x, y, r, T(x, y)]); }; add(sx, sy);
+    for (const sg of [1, -1]) { let x = sx, y = sy, a0 = angle(x, y), vx = Math.cos(a0) * sg, vy = Math.sin(a0) * sg;
+      for (let s = 0; s < len; s++) { const a = angle(x, y); let nx = Math.cos(a), ny = Math.sin(a); if (nx * vx + ny * vy < 0) { nx = -nx; ny = -ny; } vx = nx; vy = ny; const px = x + vx * d * 1.001, py = y + vy * d * 1.001; if (!inside(px, py) || (G.clear(px, py, d * 0.98) < d * 0.98 - 1e-6 && !nearSelf(G, px, py, x, y, d))) break; x = px; y = py; add(x, y); } } }
+  return out; }
+function hilbertCells(c) { const gw = Math.ceil(W / c), gh = Math.ceil(H / c); let n = 1; while (n < Math.max(gw, gh)) n *= 2; const seq = []; for (let d = 0; d < n * n; d++) { const [x, y] = d2xy(n, d); if (x < gw && y < gh) seq.push([x, y]); } return seq; }
+function chladniPts(p, R, k) { const out = [], r = p.r * k, G = new Grid(Math.max(4, r * 4)), A = Math.round(W * H / (Math.PI * r * r) * 1.4), P = p.plates, Pv = Math.max(1, Math.round(P * H / W));
+  for (let a = 0; a < A && out.length < CAP; a++) { const x = R() * W, y = R() * H, t = T(x, y), n = 1 + Math.floor(t * p.nmax), m = 1 + Math.floor((1 - t) * p.mmax), u = (x / W * P) % 1 * Math.PI, v = (y / H * Pv) % 1 * Math.PI, z = Math.cos(n * u) * Math.cos(m * v) - Math.cos(m * u) * Math.cos(n * v);
+    if (Math.abs(z) < p.width && G.fits(x, y, r, 0.15 * k)) { G.add(x, y, r); out.push([x, y, r, t]); } }
+  return out; }
+function selfLensField(strength, pw, soft, R) { const m = Fphoto(80), L = []; let tot = 0; for (let j = 0; j < m.gh; j++) for (let i = 0; i < m.gw; i++) { const w = Math.pow(m.a[j * m.gw + i], pw); tot += w; L.push([(i + 0.5) * m.c, (j + 0.5) * m.c, w]); }
+  const e2 = strength * strength / tot, D = Fnew(160), BX = new Float32Array(D.a.length), BY = new Float32Array(D.a.length), s2 = soft * soft;
+  for (let j = 0; j < D.gh; j++) for (let i = 0; i < D.gw; i++) { const x = (i + 0.5) * D.c, y = (j + 0.5) * D.c; let ax = 0, ay = 0; for (const [lx, ly, w] of L) { const dx = x - lx, dy = y - ly, d2 = dx * dx + dy * dy + s2; ax += w * dx / d2; ay += w * dy / d2; } BX[j * D.gw + i] = x - e2 * ax; BY[j * D.gw + i] = y - e2 * ay; }
+  return (x, y) => [bilin(BX, D.gw, D.gh, x / D.c - 0.5, y / D.c - 0.5), bilin(BY, D.gw, D.gh, x / D.c - 0.5, y / D.c - 0.5)]; }
+const S_ = (min, max, step, d, l) => rg(l, min, max, step, d), SEEDP = () => rg('seed', 1, 999, 1, 1);
+
+const DEFS3 = [
+/* ===== זוגות ===== */
+{ id: 'selflens', fam: 'pair', he: 'עדשה עצמית', en: 'Self-lensing', mix: 'עדשה כבידתית + הצילום כמסה',
+  desc: 'כל פיקסל כהה בצילום הוא מסה. הצילום מכופף את האור של עצמו.',
+  params: { strength: S_(50, 2000, 5, 700, 'עוצמה'), pow: S_(0.5, 5, 0.05, 2.2, 'ריכוז המסה'), soft: S_(2, 80, 1, 14, 'ריכוך'), step: S_(3, 14, 0.5, 5, 'צעד') },
+  gen(p, R, k) { const inv = selfLensField(p.strength, p.pow, p.soft, R), s = p.step * k; return hexDots(s, (x, y) => { const [bx, by] = inv(x, y); return inside(bx, by) ? cellTone(bx, by, s / 2) : 0; }); } },
+{ id: 'remainder', fam: 'pair', he: 'מה שפורייה זרק', en: 'Fourier remainder', mix: 'פורייה + צפיפות',
+  desc: 'רק מה שהדחיסה מוחקת: התדרים הגבוהים, השארית, נצרבים כצפיפות.',
+  params: { seed: SEEDP(), freq: S_(2, 80, 1, 14, 'תדר החיתוך'), r: S_(0.5, 3, 0.05, 1.15, 'רדיוס') },
+  gen(p, R, k, N) { return renderWith(Fhigh(Fphoto(200), p.freq), 'density', { seed: p.seed, r: p.r }, R, k, N); } },
+{ id: 'svdising', fam: 'pair', he: 'זיכרון מגנטי', en: 'SVD residual as Ising field', mix: 'דרגה נמוכה + איזינג',
+  desc: 'מה שנשאר אחרי הדחיסה לדרגה נמוכה הופך לשדה מגנטי, והמגנטים מסתדרים לפיו.',
+  params: { seed: SEEDP(), rank: S_(1, 20, 1, 3, 'דרגה'), gain: S_(1, 12, 0.1, 4, 'הגברה'), temp: S_(0.3, 5, 0.05, 1.3, 'טמפרטורה'), sweeps: S_(0, 60, 1, 20, 'סבבים') },
+  gen(p, R) { const f = Fphoto(GW), { rec } = Fsvd(f, p.rank, R), ext = Fmap(f, (v, x, y, q) => clamp(0.5 + p.gain * (v - rec.a[q]), 0, 1)), sp = Fising(ext, { temp: p.temp, sweeps: p.sweeps, field: 2 }, R); return cellDots(sp, v => v > 0.5, () => sp.c * 0.56); } },
+{ id: 'specslime', fam: 'pair', he: 'ריר על ספקטרום', en: 'Physarum on the spectrum', mix: 'פורייה + ריר מוך',
+  desc: 'העובש לא אוכל את הצילום אלא את התדרים שלו. התמונה לא מופיעה, רק הספקטרום שלה כשבילים.',
+  params: { seed: SEEDP(), agents: S_(3000, 60000, 1000, 24000, 'סוכנים'), steps: S_(10, 300, 5, 90, 'צעדים'), sd: S_(1, 12, 0.5, 4, 'מרחק חישה') },
+  gen(p, R) { const tr = Fphysarum(Fspectrum(Fphoto(240)), { agents: p.agents, steps: p.steps, sd: p.sd }, R); return cellDots(tr, v => v > 0.2, v => tr.c * 0.62 * Math.sqrt(v)); } },
+{ id: 'hilbspiral', fam: 'pair', he: 'נקרא בהילברט, נכתב בספירלה', en: 'Hilbert read, spiral write', mix: 'עקומת הילברט + ספירלה',
+  desc: 'הצילום נקרא לאורך עקומת הילברט ונכתב מחדש לאורך ספירלה מהמרכז. אותו רצף, מקום אחר.',
+  params: { cell: S_(2.5, 10, 0.1, 4, 'תא'), arms: S_(1, 6, 1, 1, 'זרועות'), rev: sl('כיוון', ['מההתחלה', 'מהסוף'], 0) },
+  gen(p, R, k) { const c = p.cell * k, seq = hilbertCells(c), tone = seq.map(([x, y]) => cellTone((x + 0.5) * c, (y + 0.5) * c, c / 2)); if (p.rev) tone.reverse();
+    const out = [], a = p.arms, b = c * a / TAU; let i = 0;
+    for (let arm = 0; arm < a; arm++) { let th = 1; while (i < tone.length && b * th < Math.hypot(W, H)) { const rho = b * th, ang = th + arm * TAU / a, x = W / 2 + rho * Math.cos(ang), y = H / 2 + rho * Math.sin(ang), t = tone[i++]; if (inside(x, y) && t > 0.004) out.push([x, y, areaR(t, c * c), t]); th += c / Math.sqrt(rho * rho + b * b); } }
+    return out; } },
+{ id: 'sunflower', fam: 'pair', he: 'חמנייה של היסטוגרמה', en: 'Sorted phyllotaxis', mix: 'מיון פיקסלים + פילוטקסיס',
+  desc: 'כל תאי הצילום ממוינים לפי טון ונשתלים בזווית הזהב. התמונה הופכת להתפלגות של עצמה.',
+  params: { cell: S_(2.5, 10, 0.1, 4, 'תא'), order: sl('סדר', ['כהה במרכז', 'בהיר במרכז'], 0) },
+  gen(p, R, k) { const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c), t = []; for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) t.push(cellTone((i + 0.5) * c, (j + 0.5) * c, c / 2)); t.sort((a, b) => p.order ? a - b : b - a);
+    const sp = c / Math.sqrt(Math.PI), ga = 137.50776 * Math.PI / 180, out = []; t.forEach((v, i) => { const rho = sp * Math.sqrt(i + 0.5), th = i * ga, x = W / 2 + rho * Math.cos(th), y = H / 2 + rho * Math.sin(th); if (inside(x, y) && v > 0.004) out.push([x, y, areaR(v, c * c), v]); }); return out; } },
+{ id: 'lloydturing', fam: 'pair', he: 'טיורינג מנקודות טעונות', en: 'Turing seeded by Lloyd', mix: 'רלקסציה + טיורינג',
+  desc: 'נקודות הרלקסציה של הצילום הן הזרעים של ריאקציה כימית. הדוגמה צומחת מהמקומות שבהם הצילום כהה.',
+  params: { seed: SEEDP(), seeds: S_(100, 6000, 50, 1400, 'זרעים'), steps: S_(100, 3000, 50, 900, 'צעדים'), pattern: sl('דפוס', ['תולעים', 'מבוך', 'אלמוג', 'פסים'], 0) },
+  gen(p, R, k) { const seeds = runGen('relax', { count: p.seeds, iters: 5 }, R, 1).map(q => [q[0], q[1]]), FKs = [[0.029, 0.057], [0.039, 0.058], [0.0545, 0.062], [0.022, 0.051]][p.pattern], g = Fnew(260), V = Fturing(g, { seeds, FK: () => FKs, steps: p.steps }, R);
+    return cellDots(V, v => v > 0.16, (v, q) => V.c * 0.8 * Math.sqrt(Math.max(0.05, T(((q % V.gw) + 0.5) * V.c, (((q / V.gw) | 0) + 0.5) * V.c)))); } },
+{ id: 'spinglass', fam: 'pair', he: 'זכוכית ספין', en: 'Spin glass', mix: 'איזינג + קוואזי גביש',
+  desc: 'מגנטים שהקשר ביניהם נקבע לפי גביש שאינו חוזר. חלקם רוצים להתיישר וחלקם להתהפך, ואף אחד לא נח.',
+  params: { seed: SEEDP(), temp: S_(0.2, 4, 0.05, 0.9, 'טמפרטורה'), sym: S_(3, 13, 1, 5, 'סימטריה'), lam: S_(8, 120, 1, 30, 'אורך גל'), sweeps: S_(0, 80, 1, 30, 'סבבים') },
+  gen(p, R) { const f = Fphoto(GW), qz = Fquasi(GW, p.sym, p.lam), J = Float32Array.from(qz.a, v => v >= 0 ? 1 : -1), sp = Fising(f, { temp: p.temp, sweeps: p.sweeps, J, field: 1.2 }, R); return cellDots(sp, v => v > 0.5, () => sp.c * 0.56); } },
+{ id: 'chladnitone', fam: 'pair', he: 'לוח שהטון שלו הוא התדר', en: 'Tone-tuned Chladni', mix: 'כלדני + הצילום כתדר',
+  desc: 'כל אזור בצילום רוטט בתדר אחר לפי הטון שלו. קווי הצומת נשברים בגבולות שבין אור לחושך.',
+  params: { seed: SEEDP(), nmax: S_(2, 30, 1, 14, 'תדר מרבי n'), mmax: S_(1, 20, 1, 7, 'תדר מרבי m'), plates: S_(1, 8, 1, 3, 'לוחות'), width: S_(0.02, 0.6, 0.01, 0.16, 'עובי קו'), r: S_(0.5, 3, 0.05, 1.05, 'גרגר') },
+  gen(p, R, k) { return chladniPts(p, R, k); } },
+{ id: 'contourcracks', fam: 'pair', he: 'סדקים בין קווי גובה', en: 'Cracks between contours', mix: 'קווי גובה + סדקים',
+  desc: 'קווי הגובה של הצילום הם זרעים, והאדמה נסדקת במקומות שהכי רחוקים מהם.',
+  params: { levels: S_(3, 30, 1, 9, 'רמות'), spacing: S_(4, 40, 1, 14, 'מרווח זרעים'), width: S_(0.3, 6, 0.05, 1.6, 'עובי סדק'), step: S_(1.5, 6, 0.1, 2.2, 'צעד') },
+  gen(p, R, k) { const pts = runGen('contours', { levels: p.levels, spacing: p.spacing }, R, k); return worley(pts.map(q => q[0]), pts.map(q => q[1]), p.step * k, (x, y) => p.width * k * (0.5 + T(x, y))); } },
+{ id: 'svdflow', fam: 'pair', he: 'זרימה בשתי וערב', en: 'Flow along low-rank field', mix: 'זרימה + דרגה נמוכה',
+  desc: 'קווי זרימה שעוקבים אחרי הצילום הדחוס לדרגה נמוכה, עם הדיו של הצילום המלא.',
+  params: { seed: SEEDP(), rank: S_(1, 20, 1, 4, 'דרגה'), sep: S_(2.5, 14, 0.1, 4.4, 'מרווח קווים'), len: S_(10, 400, 5, 200, 'אורך קו') },
+  gen(p, R, k) { const { rec } = Fsvd(Fphoto(GW), p.rank, R), g = rec, d = p.sep * k;
+    const ang = (x, y) => { const fx = x / g.c - 0.5, fy = y / g.c - 0.5; return Math.atan2(bilin(g.a, g.gw, g.gh, fx, fy + 1) - bilin(g.a, g.gw, g.gh, fx, fy - 1), bilin(g.a, g.gw, g.gh, fx + 1, fy) - bilin(g.a, g.gw, g.gh, fx - 1, fy)) + Math.PI / 2; };
+    return traceFlow(ang, d, p.len, R, (x, y) => areaR(T(x, y), d * d)); } },
+{ id: 'peoplewaves', fam: 'pair', he: 'גלים מהאנשים', en: 'Waves from the dark', mix: 'התאבכות + מוקדי החושך',
+  desc: 'מקורות הגלים הם הנקודות הכהות ביותר בצילום, האנשים. התמונה עצמה נעלמת ונשארת רק ההתאבכות שלהם.',
+  params: { sources: S_(2, 120, 1, 12, 'מקורות'), lambda: S_(4, 120, 0.5, 38, 'אורך גל'), sharp: S_(0.5, 8, 0.1, 2.2, 'חדות'), step: S_(3, 12, 0.5, 4.5, 'צעד') },
+  gen(p, R, k) { const g = Fblur(Fphoto(160), 2), cand = []; for (let j = 1; j < g.gh - 1; j++) for (let i = 1; i < g.gw - 1; i++) { const q = j * g.gw + i, v = g.a[q]; if (v > g.a[q - 1] && v > g.a[q + 1] && v > g.a[q - g.gw] && v > g.a[q + g.gw]) cand.push([v, (i + 0.5) * g.c, (j + 0.5) * g.c]); }
+    cand.sort((a, b) => b[0] - a[0]); const S = cand.slice(0, p.sources), lam = p.lambda * k;
+    return hexDots(p.step * k, (x, y) => { let f = 0; for (const [, sx, sy] of S) f += Math.cos(TAU * Math.hypot(x - sx, y - sy) / lam); f /= S.length || 1; return Math.pow(0.5 + 0.5 * f, p.sharp); }); } },
+{ id: 'lifefourier', fam: 'pair', he: 'החיים אחרי פורייה', en: 'Life, then low-pass', mix: 'משחק החיים + פורייה',
+  desc: 'הצילום חי כמה דורות כאוטומט, ואז נדחס לתדרים נמוכים. מה שנשאר הוא זיכרון מטושטש של יצורים.',
+  params: { seed: SEEDP(), gens: S_(0, 60, 1, 6, 'דורות'), freq: S_(4, 120, 1, 34, 'תדרים'), step: S_(3, 12, 0.5, 5, 'צעד') },
+  gen(p, R, k) { const life = Flife(Fphoto(240), p.gens, R); return hexFrom(Fnorm(Flow(life, p.freq)), p.step * k); } },
+{ id: 'drostecollapse', fam: 'pair', he: 'דרוסטה קורסת', en: 'Collapsing Droste', mix: 'דרוסטה + קריסה כבידתית',
+  desc: 'הספירלה האינסופית מתכווצת תחת הכבידה של עצמה.',
+  params: { scale: S_(1.3, 10, 0.05, 4, 'יחס חזרה'), steps: S_(0, 30, 1, 6, 'צעדים'), smooth: S_(2, 40, 0.5, 10, 'טווח כבידה'), pull: S_(0, 3, 0.05, 0.6, 'משיכה') },
+  gen(p, R, k) { return Pcollapse(runGen('droste', { scale: p.scale }, R, k), p.steps, p.smooth, p.pull); } },
+
+/* ===== שלשות ===== */
+{ id: 'isinglifeink', fam: 'triple', he: 'מגנט, חיים, דיו', en: 'Ising → Life → advection', mix: 'איזינג + משחק החיים + דיו במים',
+  desc: 'המגנטים מסתדרים, הדומיינים שלהם הופכים ליצורים, והיצורים נסחפים בזרם.',
+  params: { seed: SEEDP(), temp: S_(0.5, 4, 0.05, 1.6, 'טמפרטורה'), gens: S_(0, 40, 1, 2, 'דורות'), time: S_(0, 60, 1, 12, 'זמן') },
+  gen(p, R, k, N) { const sp = Fising(Fphoto(GW), { temp: p.temp, sweeps: 15 }, R), life = Flife(sp, p.gens, R, { thr: 0.5 }); return Padvect(cellDots(life, v => v > 0.5, () => life.c * 0.56), () => p.time, k, N); } },
+{ id: 'slimelloydcracks', fam: 'triple', he: 'עובש, מטען, סדק', en: 'Physarum → Lloyd → Worley', mix: 'ריר מוך + רלקסציה + סדקים',
+  desc: 'רשת העובש היא הצילום החדש, הנקודות הטעונות מתיישבות עליה, והאדמה נסדקת ביניהן.',
+  params: { seed: SEEDP(), steps: S_(10, 300, 5, 80, 'צעדי עובש'), cells: S_(300, 8000, 100, 2600, 'תאים'), width: S_(0.3, 6, 0.05, 1.4, 'עובי סדק') },
+  gen(p, R, k, N) { const tr = Fphysarum(Fphoto(GW), { steps: p.steps }, R), pts = renderWith(tr, 'relax', { count: p.cells, iters: 5 }, R, 1, N); return worley(pts.map(q => q[0]), pts.map(q => q[1]), 2.2 * k, (x, y) => p.width * k * (0.5 + T(x, y))); } },
+{ id: 'fourierdrostevicsek', fam: 'triple', he: 'פורייה, דרוסטה, ויצ\'ק', en: 'Low-pass → Droste → Vicsek', mix: 'פורייה + דרוסטה + ויצ\'ק',
+  desc: 'הצילום הדחוס מסתחרר לתוך עצמו ונצרב בצלבים.',
+  params: { freq: S_(2, 100, 1, 26, 'תדרים'), scale: S_(1.3, 10, 0.05, 3.2, 'יחס חזרה'), side: S_(6, 40, 0.5, 11, 'צלע') },
+  gen(p, R, k, N) { const low = Fnorm(Flow(Fphoto(200), p.freq)), d = Fwarp(low, drosteInv(p.scale, W / 2, H / 2)); return renderWith(d, 'vicsek', { side: p.side }, R, k, N); } },
+{ id: 'svdrothilbert', fam: 'triple', he: 'דרגה, סיבוב, הילברט', en: 'SVD → rotation → Hilbert', mix: 'דרגה נמוכה + סיבוב דיפרנציאלי + עקומת הילברט',
+  desc: 'שתי וערב של שורות ועמודות, מסובב כגלקסיה, ונצרב לאורך קו אחד.',
+  params: { seed: SEEDP(), rank: S_(1, 20, 1, 5, 'דרגה'), twist: S_(0, 14, 0.05, 5, 'פיתול'), cell: S_(1.8, 8, 0.1, 3, 'תא') },
+  gen(p, R, k, N) { const { rec } = Fsvd(Fphoto(GW), p.rank, R); return renderWith(Fwarp(Fnorm(rec), rotInv(p.twist, 120, 1.2, W / 2, H / 2)), 'hilbert', { cell: p.cell }, R, k, N); } },
+{ id: 'lenssortcontours', fam: 'triple', he: 'עדשה, מיון, גובה', en: 'Lens → pixel sort → contours', mix: 'עדשה כבידתית + מיון פיקסלים + קווי גובה',
+  desc: 'הצילום מתעקם סביב מסה, נמרח במיון אנכי, ונקרא כמפה טופוגרפית.',
+  params: { mass: S_(20, 400, 1, 200, 'רדיוס איינשטיין'), lo: S_(0, 1, 0.01, 0.2, 'סף תחתון'), hi: S_(0, 1, 0.01, 0.9, 'סף עליון'), levels: S_(3, 40, 1, 18, 'רמות') },
+  gen(p, R, k, N) { const f = Fpixelsort(Fwarp(Fphoto(GW), lensInv([[W / 2, H / 2]], p.mass * p.mass)), p.lo, p.hi, 1); return renderWith(f, 'contours', { levels: p.levels }, R, k, N); } },
+{ id: 'turingphyllocollapse', fam: 'triple', he: 'כימיה, חמנייה, קריסה', en: 'Turing → phyllotaxis → collapse', mix: 'טיורינג + פילוטקסיס + קריסה כבידתית',
+  desc: 'דוגמת תולעים כפול הצילום, נשתלת בזווית הזהב ומתכווצת לצבירים.',
+  params: { seed: SEEDP(), steps: S_(100, 3000, 50, 900, 'צעדי כימיה'), spread: S_(2, 10, 0.1, 3.6, 'פיזור'), csteps: S_(0, 30, 1, 5, 'צעדי קריסה') },
+  gen(p, R, k, N) { const ph = Fphoto(260), V = Fturing(Fnew(260), { nb: 900, FK: () => [0.029, 0.057], steps: p.steps }, R), f = Fmap(ph, (v, x, y, q) => clamp(V.a[q] * 2.4, 0, 1) * v); return Pcollapse(renderWith(f, 'phyllotaxis', { spread: p.spread }, R, k, N), p.csteps, 10, 0.5); } },
+{ id: 'chladnislimelevy', fam: 'triple', he: 'רטט, עובש, מעוף', en: 'Chladni → Physarum → Lévy', mix: 'כלדני + ריר מוך + מעוף לוי',
+  desc: 'העובש אוכל את קווי הצומת של לוח שהצילום מכוון, והולכי לוי מטיילים על הרשת שנשארה.',
+  params: { seed: SEEDP(), nmax: S_(2, 30, 1, 12, 'תדר מרבי'), steps: S_(10, 300, 5, 70, 'צעדי עובש'), r: S_(0.5, 4, 0.05, 2, 'רדיוס') },
+  gen(p, R, k, N) { const food = Fchladni(Fphoto(GW), p.nmax, Math.round(p.nmax / 2), 3), tr = Fphysarum(food, { steps: p.steps, food: 10 }, R); return renderWith(tr, 'levy', { r: p.r }, R, k, N); } },
+{ id: 'quasilenscracks', fam: 'triple', he: 'גביש של עדשות', en: 'Quasicrystal micro-lensing', mix: 'קוואזי גביש + עדשה כבידתית + סדקים',
+  desc: 'בכל שיא של קוואזי גביש יושבת מסה קטנה. הצילום נראה מבעד לסריג של עדשות ונסדק.',
+  params: { sym: S_(3, 13, 1, 5, 'סימטריה'), lam: S_(30, 300, 1, 110, 'אורך גל'), mass: S_(2, 60, 0.5, 16, 'מסה'), cells: S_(300, 8000, 100, 3000, 'תאים') },
+  gen(p, R, k, N) { const q = Fquasi(120, p.sym, p.lam), L = []; for (let j = 1; j < q.gh - 1; j++) for (let i = 1; i < q.gw - 1; i++) { const z = j * q.gw + i, v = q.a[z]; if (v > 0.3 && v >= q.a[z - 1] && v > q.a[z + 1] && v >= q.a[z - q.gw] && v > q.a[z + q.gw]) L.push([(i + 0.5) * q.c, (j + 0.5) * q.c]); }
+    const f = Fwarp(Fphoto(GW), lensInv(L, p.mass * p.mass)); return renderWith(f, 'cracks', { cells: p.cells }, R, k, N); } },
+{ id: 'heatresidual', fam: 'triple', he: 'חום ושארית', en: 'Photo as heat, residual as field', mix: 'איזינג + פורייה + הצילום כטמפרטורה',
+  desc: 'האזורים הבהירים בצילום חמים, הכהים קרים. השדה המגנטי הוא מה שפורייה זרק.',
+  params: { seed: SEEDP(), freq: S_(2, 80, 1, 18, 'תדר החיתוך'), gain: S_(1, 20, 0.1, 6, 'הגברה'), hot: S_(1, 8, 0.05, 4, 'חום מרבי'), sweeps: S_(0, 60, 1, 20, 'סבבים') },
+  gen(p, R) { const f = Fphoto(GW), hi = Fhigh(f, p.freq, true), ext = Fmap(hi, v => clamp(0.5 + p.gain * v, 0, 1)), Tm = Float32Array.from(f.a, v => lerp(p.hot, 0.4, v)), sp = Fising(ext, { T: Tm, sweeps: p.sweeps, field: 1.5 }, R); return cellDots(sp, v => v > 0.5, () => sp.c * 0.56); } },
+{ id: 'scrambleturing', fam: 'triple', he: 'כימיה של רעש מסודר', en: 'Phase scramble → Turing', mix: 'פורייה + ערבוב פאזה + טיורינג',
+  desc: 'צילום עם כל התדרים ובלי אף אובייקט מכוון ריאקציה כימית: בהיר הופך לנקודות, כהה למבוך.',
+  params: { seed: SEEDP(), steps: S_(100, 3000, 50, 1000, 'צעדים') },
+  gen(p, R) { const sc = Fresize(Fscramble(Fphoto(200), R), 260), V = Fturing(Fnew(260), { nb: 1000, FK: q => [lerp(0.025, 0.039, sc.a[q]), lerp(0.06, 0.058, sc.a[q])], steps: p.steps }, R); return cellDots(V, v => v > 0.16, (v, q) => V.c * 0.75 * Math.sqrt(0.2 + sc.a[q])); } },
+{ id: 'specrotquasi', fam: 'triple', he: 'ספקטרום מסתובב', en: 'Spectrum → rotation → quasicrystal', mix: 'פורייה + סיבוב דיפרנציאלי + קוואזי גביש',
+  desc: 'מפת התדרים של הצילום, מסובבת כגלקסיה, נצרבת בגביש שאינו חוזר.',
+  params: { twist: S_(0, 14, 0.05, 4, 'פיתול'), sym: S_(3, 15, 1, 7, 'סימטריה'), lambda: S_(4, 40, 0.5, 8, 'אורך גל') },
+  gen(p, R, k, N) { return renderWith(Fwarp(Fspectrum(Fphoto(200)), rotInv(p.twist, 140, 1.1, W / 2, H / 2)), 'quasicrystal', { sym: p.sym, lambda: p.lambda }, R, k, N); } },
+{ id: 'sortlifelens', fam: 'triple', he: 'מיון, חיים, עדשה', en: 'Sort → Life → lens', mix: 'מיון פיקסלים + משחק החיים + עדשה כבידתית',
+  desc: 'השורות ממוינות, הממוין חי כמה דורות, וכל זה נראה דרך חור שחור.',
+  params: { seed: SEEDP(), gens: S_(0, 40, 1, 4, 'דורות'), mass: S_(20, 400, 1, 170, 'רדיוס איינשטיין'), step: S_(3, 12, 0.5, 4.5, 'צעד') },
+  gen(p, R, k) { const life = Flife(Fpixelsort(Fphoto(GW), 0.25, 0.85, 0), p.gens, R); return hexFrom(Fwarp(Fblur(life, 1), lensInv([[W * 0.5, H * 0.45]], p.mass * p.mass)), p.step * k); } },
+
+/* ===== רביעיות ===== */
+{ id: 'q_lloydinkising', fam: 'quad', he: 'מטען, זרם, צבירה, מגנט', en: 'Lloyd → advect → splat → Ising', mix: 'רלקסציה + דיו במים + צבירה + איזינג',
+  desc: 'הנקודות הטעונות נסחפות, הצפיפות שלהן הופכת לשדה, והמגנטים מסתדרים לפי מה שנסחף.',
+  params: { seed: SEEDP(), time: S_(0, 60, 1, 14, 'זמן'), temp: S_(0.3, 4, 0.05, 1.2, 'טמפרטורה') },
+  gen(p, R, k, N) { const pts = Padvect(runGen('relax', { count: 12000, iters: 4 }, R, 1), () => p.time, 1, N), sp = Fising(Fsplat(pts, GW, 2), { temp: p.temp, sweeps: 20, field: 2 }, R); return cellDots(sp, v => v > 0.5, () => sp.c * 0.56); } },
+{ id: 'q_lowcontourturing', fam: 'quad', he: 'דחיסה, גובה, זרע, כימיה', en: 'Low-pass → contours → seeds → Turing', mix: 'פורייה + קווי גובה + זרעים + טיורינג',
+  desc: 'קווי הגובה של הצילום הדחוס זורעים ריאקציה, והדוגמה ממלאת את המפה.',
+  params: { seed: SEEDP(), freq: S_(2, 80, 1, 18, 'תדרים'), steps: S_(100, 3000, 50, 900, 'צעדים'), pattern: sl('דפוס', ['תולעים', 'מבוך', 'אלמוג', 'פסים'], 1) },
+  gen(p, R, k, N) { const low = Fnorm(Flow(Fphoto(200), p.freq)), cp = renderWith(low, 'contours', { levels: 8, spacing: 16 }, R, 1, N).filter((q, i) => i % 3 === 0).map(q => [q[0], q[1]]), FKs = [[0.029, 0.057], [0.039, 0.058], [0.0545, 0.062], [0.022, 0.051]][p.pattern], V = Fturing(Fnew(260), { seeds: cp, FK: () => FKs, steps: p.steps }, R), lo = Fresize(low, 260);
+    return cellDots(V, v => v > 0.16, (v, q) => V.c * 0.8 * Math.sqrt(0.1 + lo.a[q])); } },
+{ id: 'q_lenssortlifequasi', fam: 'quad', he: 'עדשה עצמית, מיון, חיים, גביש', en: 'Self-lens → sort → Life → quasicrystal', mix: 'עדשה עצמית + מיון פיקסלים + משחק החיים + קוואזי גביש',
+  desc: 'הצילום מכופף את עצמו, נמרח, חי שלושה דורות, ונצרב בגביש.',
+  params: { seed: SEEDP(), strength: S_(50, 2000, 5, 700, 'עוצמה'), gens: S_(0, 30, 1, 3, 'דורות'), lambda: S_(4, 40, 0.5, 7, 'אורך גל') },
+  gen(p, R, k, N) { const inv = selfLensField(p.strength, 2, 14, R), f = Flife(Fpixelsort(Fwarp(Fphoto(GW), inv), 0.2, 0.8, 0), p.gens, R); return renderWith(Fblur(f, 1), 'quasicrystal', { lambda: p.lambda }, R, k, N); } },
+{ id: 'q_slimedrostesvd', fam: 'quad', he: 'עובש, דרוסטה, דרגה, הילברט', en: 'Physarum → Droste → SVD → Hilbert', mix: 'ריר מוך + דרוסטה + דרגה נמוכה + עקומת הילברט',
+  desc: 'רשת העובש מסתחררת לתוך עצמה, נדחסת לשתי וערב, ונכתבת בקו אחד.',
+  params: { seed: SEEDP(), steps: S_(10, 300, 5, 70, 'צעדי עובש'), scale: S_(1.3, 10, 0.05, 3.5, 'יחס חזרה'), rank: S_(1, 30, 1, 6, 'דרגה') },
+  gen(p, R, k, N) { const tr = Fphysarum(Fphoto(GW), { steps: p.steps }, R), d = Fwarp(tr, drosteInv(p.scale, W / 2, H / 2)), { rec } = Fsvd(d, p.rank, R); return renderWith(Fnorm(rec), 'hilbert', {}, R, k, N); } },
+{ id: 'q_chladnicollapse', fam: 'quad', he: 'רטט, טון, קריסה, סיבוב', en: 'Tone-Chladni → collapse → rotation', mix: 'כלדני + הצילום כתדר + קריסה כבידתית + סיבוב דיפרנציאלי',
+  desc: 'חול שהצילום מכוון, מתכווץ לגושים ומסתובב כגלקסיה.',
+  params: { seed: SEEDP(), steps: S_(0, 30, 1, 6, 'צעדי קריסה'), twist: S_(0, 14, 0.05, 3, 'פיתול') },
+  gen(p, R, k) { const pts = chladniPts({ nmax: 14, mmax: 7, plates: 3, width: 0.2, r: 1.05 }, R, k), rot = rotInv(-p.twist, 140, 1.1, W / 2, H / 2); return Pwarp(Pcollapse(pts, p.steps, 10, 0.6), (x, y) => rot(x, y)); } },
+{ id: 'q_isingcracksink', fam: 'quad', he: 'מגנט, גבול, סדק, זרם', en: 'Ising walls → Worley → advect → Lévy', mix: 'איזינג + סדקים + דיו במים + מעוף לוי',
+  desc: 'הקירות שבין הדומיינים המגנטיים הם זרעים של סדקים. הסדקים נסחפים, ורק מה שהולכי לוי ביקרו בו נשאר.',
+  params: { seed: SEEDP(), temp: S_(0.5, 4, 0.05, 1.5, 'טמפרטורה'), time: S_(0, 60, 1, 8, 'זמן'), walkers: S_(1, 40, 1, 10, 'הולכים') },
+  gen(p, R, k, N) { const sp = Fising(Fphoto(GW), { temp: p.temp, sweeps: 15 }, R), SX = [], SY = []; for (let j = 1; j < sp.gh - 1; j++) for (let i = 1; i < sp.gw - 1; i++) { const q = j * sp.gw + i; if (sp.a[q] !== sp.a[q + 1] && R() < 0.25) { SX.push((i + 0.5) * sp.c); SY.push((j + 0.5) * sp.c); } }
+    const cr = Padvect(worley(SX, SY, 2.4 * k, () => 1.6 * k), () => p.time, k, N), vis = new Uint8Array(200 * 118), c = W / 200;
+    for (let w = 0; w < p.walkers; w++) { let x = R() * W, y = R() * H; for (let s = 0; s < 2500; s++) { const L = Math.min(W * 0.4, 6 * Math.pow(Math.max(R(), 1e-5), -1 / 1.2)), th = R() * TAU; x = ((x + Math.cos(th) * L) % W + W) % W; y = ((y + Math.sin(th) * L) % H + H) % H; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const i = clamp(((x / c) | 0) + dx, 0, 199), j = clamp(((y / c) | 0) + dy, 0, 117); vis[j * 200 + i] = 1; } } }
+    return cr.filter(q => vis[clamp((q[1] / c) | 0, 0, 117) * 200 + clamp((q[0] / c) | 0, 0, 199)]); } },
+
+/* ===== חיבורים לא הגיוניים ===== */
+{ id: 'toneastime', fam: 'absurd', he: 'הטון כזמן', en: 'Tone as time', mix: 'רסטר + דיו במים, הטון קובע כמה זמן עבר',
+  desc: 'כל נקודה נסחפת בזרם לפי הכהות שלה. הכהות היא הזמן: האנשים כבר רחוקים, הקירות עוד במקום.',
+  params: { maxTime: S_(0, 120, 1, 40, 'זמן מרבי'), scale: S_(0.5, 8, 0.1, 2, 'קנה מידה זרם'), step: S_(3, 12, 0.5, 4.5, 'צעד') },
+  gen(p, R, k, N) { const base = hexDots(p.step * k, (x, y) => cellTone(x, y, p.step * k / 2)); return Padvect(base, q => Math.round(q[3] * q[3] * p.maxTime), k, N, p.scale); } },
+{ id: 'toneasangle', fam: 'absurd', he: 'הטון כזווית', en: 'Tone as angle', mix: 'רסטר + סיבוב, הטון קובע את הזווית',
+  desc: 'כל נקודה מסתובבת סביב מרכז התמונה בזווית שהטון שלה קובע. כהה מסתובב רחוק, בהיר נשאר.',
+  params: { turns: S_(0, 4, 0.01, 0.35, 'סיבובים'), cx: S_(0, 1, 0.01, 0.5, 'מרכז אופקי'), cy: S_(0, 1, 0.01, 0.5, 'מרכז אנכי'), step: S_(3, 12, 0.5, 4.5, 'צעד') },
+  gen(p, R, k) { const cx = p.cx * W, cy = p.cy * H; return Pwarp(hexDots(p.step * k, (x, y) => cellTone(x, y, p.step * k / 2)), (x, y, q) => { const a = q[3] * p.turns * TAU, dx = x - cx, dy = y - cy; return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)]; }); } },
+{ id: 'phasescramble', fam: 'absurd', he: 'כל התדרים, אף דבר', en: 'Phase scramble', mix: 'פורייה + היפוך פאזה אקראי',
+  desc: 'אותה עוצמה בכל תדר, הסימן של כל גל מוגרל מחדש. סטטיסטית זה אותו צילום, בפועל אין בו אף אחד.',
+  params: { seed: SEEDP(), step: S_(3, 12, 0.5, 5, 'צעד') },
+  gen(p, R, k, N) { return renderWith(Fscramble(Fphoto(200), R), 'halftone', { step: p.step }, R, k, N); } },
+{ id: 'transpose', fam: 'absurd', he: 'שורות כעמודות', en: 'Transposed memory', mix: 'דרגה נמוכה + החלפת וקטורים',
+  desc: 'הצילום מפורק לווקטורים של שורות ועמודות, ואז הם מחליפים תפקיד. העמודות נפרשות לרוחב.',
+  params: { seed: SEEDP(), rank: S_(1, 30, 1, 8, 'דרגה'), step: S_(3, 12, 0.5, 5, 'צעד') },
+  gen(p, R, k) { const f = Fphoto(GW), { U, V, S } = Fsvd(f, p.rank, R), o = Fnew(GW);
+    for (let j = 0; j < o.gh; j++) for (let i = 0; i < o.gw; i++) { let s = 0; for (let q = 0; q < S.length; q++) s += S[q] * U[q][Math.min(f.gh - 1, (i / o.gw * f.gh) | 0)] * V[q][Math.min(f.gw - 1, (j / o.gh * f.gw) | 0)]; o.a[j * o.gw + i] = s; }
+    return hexFrom(Fnorm(o), p.step * k); } },
+{ id: 'hilberthist', fam: 'absurd', he: 'היסטוגרמה על עקומה', en: 'Sorted Hilbert', mix: 'מיון + עקומת הילברט',
+  desc: 'כל הטונים של הצילום ממוינים ונשפכים לאורך עקומת הילברט. אותו דיו, בלי שום מקום מקורי.',
+  params: { cell: S_(2.5, 12, 0.1, 4, 'תא'), order: sl('סדר', ['כהה קודם', 'בהיר קודם'], 0) },
+  gen(p, R, k) { const c = p.cell * k, seq = hilbertCells(c), t = seq.map(([x, y]) => cellTone((x + 0.5) * c, (y + 0.5) * c, c / 2)).sort((a, b) => p.order ? a - b : b - a), out = [];
+    seq.forEach(([x, y], i) => { if (t[i] > 0.004) out.push([(x + 0.5) * c, (y + 0.5) * c, areaR(t[i], c * c), t[i]]); }); return out; } },
+{ id: 'twins', fam: 'absurd', he: 'תאומים', en: 'Self-similarity pointers', mix: 'השוואת טלאים + קווים',
+  desc: 'לכל אזור מחפשים אזור אחר בצילום שנראה הכי דומה לו, ומותחים ביניהם חוט של נקודות. הצילום מצביע על עצמו.',
+  params: { seed: SEEDP(), cell: S_(6, 30, 1, 14, 'תא'), tries: S_(20, 600, 10, 220, 'ניסיונות'), maxLen: S_(2, 60, 1, 10, 'אורך מרבי') },
+  gen(p, R, k) { const c = p.cell * k, g = toneGrid(Math.ceil(W / c)), { gw, gh } = g, patch = (i, j, u, v) => { let s = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const a = g.a[clamp(j + dy, 0, gh - 1) * gw + clamp(i + dx, 0, gw - 1)], b = g.a[clamp(v + dy, 0, gh - 1) * gw + clamp(u + dx, 0, gw - 1)]; s += (a - b) * (a - b); } return s; };
+    const out = [];
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { let best = 1e9, bu = i, bv = j; for (let t = 0; t < p.tries; t++) { const u = Math.floor(R() * gw), v = Math.floor(R() * gh); if (Math.abs(u - i) + Math.abs(v - j) < 4) continue; const d = patch(i, j, u, v); if (d < best) { best = d; bu = u; bv = v; } }
+      const x0 = (i + 0.5) * g.c, y0 = (j + 0.5) * g.c, x1 = (bu + 0.5) * g.c, y1 = (bv + 0.5) * g.c, t0 = g.a[j * gw + i], L = Math.hypot(x1 - x0, y1 - y0), n = Math.min(p.maxLen, Math.max(1, Math.floor(L / (c * 0.5))));
+      for (let s = 0; s < n; s++) { const u = s / n; out.push([lerp(x0, x1, u), lerp(y0, y1, u), Math.max(0.3, areaR(t0, c * c) * 0.45 * (1 - u * 0.8)), t0]); } }
+    return out; } },
+{ id: 'ownrule', fam: 'absurd', he: 'לכל תא חוק משלו', en: 'Tone-ruled automaton', mix: 'משחק החיים + הצילום כחוקה',
+  desc: 'אוטומט תאי שבו הטון של כל תא קובע את חוקי הלידה וההישרדות שלו. כל אזור חי בפיזיקה אחרת.',
+  params: { seed: SEEDP(), gens: S_(0, 80, 1, 14, 'דורות'), cell: S_(2, 8, 0.1, 3.2, 'תא') },
+  gen(p, R, k) { const f = toneGrid(Math.ceil(W / (p.cell * k))), rules = Array.from(f.a, t => { const B = new Uint8Array(9), S = new Uint8Array(9), b = 1 + Math.round(t * 5), s = Math.round((1 - t) * 6); B[b] = 1; B[Math.min(8, b + 3)] = 1; S[s] = S[Math.min(8, s + 1)] = S[Math.min(8, s + 2)] = 1; return [B, S]; });
+    const L = Flife(f, p.gens, R, { rule: q => rules[q] }); return cellDots(L, v => v > 0.5, (v, q) => L.c * 0.56); } },
+{ id: 'feedback', fam: 'absurd', he: 'משוב', en: 'Dot feedback loop', mix: 'רסטר + צבירה + סיבוב + זיכרון, בלולאה',
+  desc: 'הנקודות קוראות את הפלט של עצמן שוב ושוב, כמו מצלמה שמצלמת את המסך שלה. כל סיבוב מסובב ומגדיל מעט.',
+  params: { seed: SEEDP(), iters: S_(1, 30, 1, 10, 'סבבים'), rot: S_(-0.2, 0.2, 0.002, 0.04, 'סיבוב לסבב'), zoom: S_(0.9, 1.1, 0.002, 1.02, 'הגדלה לסבב'), memory: S_(0, 0.9, 0.01, 0.25, 'זיכרון של המקור'), step: S_(3, 12, 0.5, 5, 'צעד') },
+  gen(p, R, k) { const photo = Fphoto(GW); let f = Fclone(photo); const ca = Math.cos(p.rot), sa = Math.sin(p.rot);
+    for (let it = 0; it < p.iters; it++) { const pts = hexDots(6, (x, y) => clamp(gsample(f, x, y), 0, 1)).map(q => { const dx = (q[0] - W / 2) * p.zoom, dy = (q[1] - H / 2) * p.zoom; return [W / 2 + dx * ca - dy * sa, H / 2 + dx * sa + dy * ca, q[2], q[3]]; }); const sp = Fsplat(pts, GW, 1); f = Fmap(sp, (v, x, y, q) => lerp(v, photo.a[q], p.memory)); }
+    return hexFrom(f, p.step * k); } }
+];
+
 /* ===== משפחות ===== */
 const FAM = {
   order: { he: 'סדר', c: '#3a6ea5' }, growth: { he: 'צמיחה', c: '#4f8a4b' }, conc: { he: 'ריכוז', c: '#b8336a' }, fractal: { he: 'פרקטלים', c: '#7a4fb0' }, break: { he: 'שבירה', c: '#e8442c' },
-  physics: { he: 'פיזיקה', c: '#1f8f8f' }, organic: { he: 'אורגני', c: '#9a7a1a' }, galactic: { he: 'גלקטי', c: '#0b1d51' }, math: { he: 'מתמטי', c: '#c06a00' }, glitch: { he: 'גליץ\'', c: '#d629b1' }
+  physics: { he: 'פיזיקה', c: '#1f8f8f' }, organic: { he: 'אורגני', c: '#9a7a1a' }, galactic: { he: 'גלקטי', c: '#0b1d51' }, math: { he: 'מתמטי', c: '#c06a00' }, glitch: { he: 'גליץ\'', c: '#d629b1' },
+  pair: { he: 'זוג', c: '#5b7083' }, triple: { he: 'שלשה', c: '#a0522d' }, quad: { he: 'רביעייה', c: '#2e7d6b' }, absurd: { he: 'לא הגיוני', c: '#141414' }
 };
 const FAMOF = { poisson: 'conc', grid: 'order', hex: 'order', halftone: 'order', phyllotaxis: 'growth', rings: 'order', spiral: 'growth', density: 'conc', clusters: 'conc', noise: 'conc', packing: 'fractal', quadtree: 'fractal', sierpinski: 'fractal', cantor: 'fractal', vicsek: 'fractal', nested: 'fractal', flow: 'growth', disorder: 'break', edge: 'conc', levy: 'fractal' };
 DEFS.forEach(d => { d.fam = FAMOF[d.id]; d.set = 1; });
 DEFS2.forEach(d => { d.set = 2; });
-const ALL = DEFS.concat(DEFS2);
+DEFS3.forEach(d => { d.set = 3; });
+const ALL = DEFS.concat(DEFS2, DEFS3);
 
 /* ===== מצב ובנייה ===== */
 Object.assign(S, { motion: 1, wander: 1.2, wspeed: 0.3, pulse: 6, pspeed: 0.35, mouseR: 60, mouseS: 1, fam: '' });
@@ -727,23 +1057,25 @@ function overlay(ctx, split, scale, ox, oy, pw, ph, dpr) {
 
 /* ===== גלריה ===== */
 const pad = n => String(n).padStart(2, '0'), dprOf = () => Math.min(2, devicePixelRatio || 1);
-const tileGL = new DotGL(document.createElement('canvas'));
+// בלי WebGL2 הדף ממשיך לעבוד בציור דו ממדי, בלי תנועה
+let tileGL = null; try { tileGL = new DotGL(document.createElement('canvas')); } catch (e) { S.motion = 0; }
 const tagHTML = f => `<span class="tag" style="--c:${FAM[f].c}">${FAM[f].he}</span>`;
 function tileDraw(v, time) {
   if (!v.D) return; const cv = v.cv, dpr = dprOf(), pw = Math.round(cv.clientWidth * dpr), ph = Math.round(cv.clientHeight * dpr);
   if (!pw || !ph) return;
   if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
-  const scale = pw / W; tileGL.draw(v, pw, ph, scale, 0, 0, time);
-  v.ctx.drawImage(tileGL.cv, 0, 0, pw, ph, 0, 0, pw, ph);
+  const scale = pw / W;
+  if (tileGL) { tileGL.draw(v, pw, ph, scale, 0, 0, time); v.ctx.drawImage(tileGL.cv, 0, 0, pw, ph, 0, 0, pw, ph); }
+  else drawDots(v.ctx, v, scale, 0, 0, pw, ph);
   overlay(v.ctx, v.split ?? 1, scale, 0, 0, pw, ph, dpr);
   cv.classList.remove('pending'); v.dirty = false;
 }
-const io = new IntersectionObserver(es => { for (const e of es) { const v = V[+e.target.dataset.i]; v.visible = e.isIntersecting; if (v.visible) v.dirty = true; else tileGL.drop(v); } }, { rootMargin: '150px' });
+const io = new IntersectionObserver(es => { for (const e of es) { const v = V[+e.target.dataset.i]; v.visible = e.isIntersecting; if (v.visible) v.dirty = true; else tileGL && tileGL.drop(v); } }, { rootMargin: '150px' });
 function buildGallery() {
-  for (const s of [1, 2]) document.getElementById('grid' + s).innerHTML = '';
+  for (const s of [1, 2, 3]) document.getElementById('grid' + s).innerHTML = '';
   V.forEach(v => {
     const card = document.createElement('div'); card.className = 'card'; card.dataset.fam = v.def.fam;
-    card.innerHTML = `<canvas class="pending" data-i="${v.i}" style="aspect-ratio:${W}/${H}"></canvas><div class="cap"><span class="num">${pad(v.i + 1)}</span><span class="name">${v.def.he}</span>${tagHTML(v.def.fam)}<span class="en">${v.def.en}</span></div><div class="desc">${v.def.desc}</div>`;
+    card.innerHTML = `<canvas class="pending" data-i="${v.i}" style="aspect-ratio:${W}/${H}"></canvas><div class="cap"><span class="num">${pad(v.i + 1)}</span><span class="name">${v.def.he}</span>${tagHTML(v.def.fam)}<span class="en">${v.def.en}</span></div><div class="desc">${v.def.desc}${v.def.mix ? `<br><span class="mix">${v.def.mix}</span>` : ''}</div>`;
     document.getElementById('grid' + v.def.set).appendChild(card); v.card = card; v.cv = card.querySelector('canvas'); v.ctx = v.cv.getContext('2d');
     v.cv.addEventListener('pointermove', e => { const r = v.cv.getBoundingClientRect(); v.split = clamp((e.clientX - r.left) / r.width, 0, 1); v.dirty = true; });
     v.cv.addEventListener('pointerleave', () => { v.split = 1; v.dirty = true; });
@@ -760,14 +1092,18 @@ function buildFams() {
 }
 function applyFilter() {
   V.forEach(v => { if (v.card) v.card.style.display = !S.fam || v.def.fam === S.fam ? '' : 'none'; });
-  for (const s of [1, 2]) { const any = V.some(v => v.def.set === s && (!S.fam || v.def.fam === S.fam)); document.getElementById('set' + s).style.display = any ? '' : 'none'; document.getElementById('grid' + s).style.display = any ? '' : 'none'; }
+  for (const s of [1, 2, 3]) { const any = V.some(v => v.def.set === s && (!S.fam || v.def.fam === S.fam)); document.getElementById('set' + s).style.display = any ? '' : 'none'; document.getElementById('grid' + s).style.display = any ? '' : 'none'; }
 }
 
 let genToken = 0;
+function safeGenerate(v) { try { generate(v); } catch (e) { console.error(v.def.id, e); v.D = { n: 0, X: new Float32Array(0), Y: new Float32Array(0), R: new Float32Array(0), groups: [], inst: new Float32Array(0) }; v.err = String(e); } v.stale = false; tileGL && tileGL.drop(v); v.dirty = true; }
+// צורבים קודם את מה שעל המסך, ואחר כך את השאר ברקע
 function generateAll() {
-  const tok = ++genToken; let i = 0; const st = document.getElementById('status');
-  V.forEach(v => v.cv && v.cv.classList.add('pending'));
-  (function next() { if (tok !== genToken) return; if (i >= V.length) { st.textContent = ''; return; } const v = V[i++]; st.textContent = `צורב ${i} מתוך ${V.length}: ${v.def.he}`; setTimeout(() => { if (tok !== genToken) return; generate(v); tileGL.drop(v); v.dirty = true; next(); }, 0); })();
+  const tok = ++genToken, st = document.getElementById('status');
+  V.forEach(v => { v.stale = true; v.cv && v.cv.classList.add('pending'); });
+  (function next() { if (tok !== genToken) return; const left = V.filter(v => v.stale); if (!left.length) { st.textContent = ''; return; }
+    const v = left.find(q => q.visible && q.card && q.card.style.display !== 'none') || left[0]; st.textContent = `צורב ${V.length - left.length + 1} מתוך ${V.length}: ${v.def.he}`;
+    setTimeout(() => { if (tok !== genToken) return; safeGenerate(v); next(); }, 0); })();
 }
 
 /* ===== תצוגה מלאה ===== */
@@ -776,7 +1112,7 @@ const fullCv = document.getElementById('fullgl'), ovCv = document.getElementById
 let fullGL = null; try { fullGL = new DotGL(fullCv); } catch (e) { }
 let cur = -1, F = { split: 0.5, zoom: 0, panX: 0, panY: 0, mode: 'cmp' }, timer = 0, ovDirty = true;
 const mouse = { x: 0, y: 0, on: false };
-function openView(i) { cur = (i + V.length) % V.length; view.classList.add('open'); document.body.style.overflow = 'hidden'; ovDirty = true; buildPanel(); }
+function openView(i) { cur = (i + V.length) % V.length; if (!V[cur].D || V[cur].stale) safeGenerate(V[cur]); view.classList.add('open'); document.body.style.overflow = 'hidden'; ovDirty = true; buildPanel(); }
 function closeView() { view.classList.remove('open'); document.body.style.overflow = ''; if (cur >= 0) { fullGL && fullGL.drop(V[cur]); V[cur].dirty = true; } cur = -1; }
 function fullGeom() {
   const dpr = dprOf(), pw = Math.round(stage.clientWidth * dpr), ph = Math.round(stage.clientHeight * dpr), fit = Math.min(pw / W, ph / H) * 0.96;
@@ -797,8 +1133,17 @@ function physics(v, dt) {
   }
   P.active = act; return P.off;
 }
+let fctx2 = null;
 function fullFrame(time, dt) {
-  if (cur < 0 || !fullGL) return; const v = V[cur], g = fullGeom();
+  if (cur < 0) return; const v = V[cur], g = fullGeom();
+  if (!fullGL) {
+    if (fullCv.width !== g.pw || fullCv.height !== g.ph) { fullCv.width = g.pw; fullCv.height = g.ph; }
+    if (ovCv.width !== g.pw || ovCv.height !== g.ph) { ovCv.width = g.pw; ovCv.height = g.ph; ovDirty = true; }
+    fctx2 = fctx2 || fullCv.getContext('2d'); const key = [g.pw, g.ph, g.scale, g.ox, g.oy, v.D && v.D.n, cur].join(',');
+    if (F.key !== key) { drawDots(fctx2, v, g.scale, g.ox, g.oy, g.pw, g.ph); F.key = key; }
+    if (ovDirty) { octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, g.pw, g.ph); overlay(octx, F.split, g.scale, g.ox, g.oy, g.pw, g.ph, g.dpr); ovDirty = false; }
+    return;
+  }
   if (fullCv.width !== g.pw || fullCv.height !== g.ph) { fullCv.width = g.pw; fullCv.height = g.ph; }
   if (ovCv.width !== g.pw || ovCv.height !== g.ph) { ovCv.width = g.pw; ovCv.height = g.ph; ovDirty = true; }
   const off = F.mode === 'before' ? null : physics(v, dt);
@@ -833,12 +1178,12 @@ function rowSelect(l, opts, val, on) {
   r.querySelector('select').onchange = e => on(+e.target.value); panel.appendChild(r);
 }
 const sec = t => { const h = document.createElement('h3'); h.textContent = t; panel.appendChild(h); };
-function regen() { clearTimeout(timer); timer = setTimeout(() => { const v = V[cur]; generate(v); fullGL && fullGL.drop(v); tileGL.drop(v); info(); }, 90); }
+function regen() { clearTimeout(timer); timer = setTimeout(() => { const v = V[cur]; safeGenerate(v); fullGL && fullGL.drop(v); tileGL && tileGL.drop(v); info(); F.key = ''; }, 90); }
 function info() { const el = document.getElementById('pInfo'), v = V[cur]; if (el && v && v.D) el.textContent = `${v.D.n.toLocaleString('he-IL')} נקודות · ${v.ms.toFixed(0)}ms`; }
 function buildPanel() {
   const v = V[cur], d = v.def;
   panel.innerHTML = `<div class="nav"><button id="pPrev">הקודם</button><button id="pBack">לגלריה</button><button id="pNext">הבא</button></div>
-  <div class="ph"><span class="num">${pad(cur + 1)}</span><span class="name">${d.he}</span>${tagHTML(d.fam)}</div><div class="en">${d.en}</div><div class="pdesc">${d.desc}</div><div class="info" id="pInfo"></div>`;
+  <div class="ph"><span class="num">${pad(cur + 1)}</span><span class="name">${d.he}</span>${tagHTML(d.fam)}</div><div class="en">${d.en}</div><div class="pdesc">${d.desc}${d.mix ? `<br><span class="mix">${d.mix}</span>` : ''}</div><div class="info" id="pInfo"></div>`;
   panel.querySelector('#pPrev').onclick = () => { fullGL && fullGL.drop(v); openView(cur - 1); }; panel.querySelector('#pNext').onclick = () => { fullGL && fullGL.drop(v); openView(cur + 1); }; panel.querySelector('#pBack').onclick = closeView;
   sec('תצוגה');
   const b1 = document.createElement('div'); b1.className = 'btns';
@@ -892,7 +1237,7 @@ let last = performance.now(), frame = 0;
 function loop(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000), time = now / 1000; last = now; frame++;
   if (cur >= 0) fullFrame(time, dt);
-  else for (const v of V) { if (!v.visible || !v.D || !v.cv || v.card.style.display === 'none') continue; if (S.motion ? ((frame + v.i) % 2 === 0) : v.dirty) tileDraw(v, time); else if (v.dirty) tileDraw(v, time); }
+  else for (const v of V) { if (!v.visible || !v.D || !v.cv || v.card.style.display === 'none') continue; if (S.motion && tileGL ? ((frame + v.i) % 2 === 0) : v.dirty) tileDraw(v, time); else if (v.dirty) tileDraw(v, time); }
   requestAnimationFrame(loop);
 }
 
@@ -902,6 +1247,7 @@ IMG.onload = () => {
   H = Math.round(W * IMG.naturalHeight / IMG.naturalWidth);
   try { analyseImage(); } catch (e) { document.getElementById('status').textContent = 'הדפדפן חסם קריאה של הצילום.'; return; }
   setColors(); buildFams(); buildGallery(); applyFilter(); generateAll(); requestAnimationFrame(loop);
+  if (!tileGL) { const m = document.getElementById('gMotion'); m.value = '0'; m.disabled = true; m.title = 'הדפדפן הזה לא תומך ב WebGL2, ולכן אין תנועה'; }
 };
 IMG.onerror = () => { document.getElementById('status').textContent = 'הצילום לא נמצא ליד הדף.'; };
 IMG.src = window.DECL_SRC || 'declaration.jpg';
