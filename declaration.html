@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>הכרזה בעשרים מנגנונים</title>
+<title>הכרזה בארבעים מנגנונים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 :root{--bg:#f3efe6;--ink:#141414;--mute:#8a857b;--line:#d9d3c6}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Hebrew',system-ui,sans-serif}
-header{padding:40px 48px 26px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+header{padding:40px 48px 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
 h1{font-weight:900;font-stretch:75%;font-size:64px;margin:0;line-height:.88}
 .sub{color:var(--mute);margin-top:12px;font-size:14px;line-height:1.6;max-width:720px}
 .sub a,.links a{color:var(--mute)}
@@ -20,21 +20,27 @@ h1{font-weight:900;font-stretch:75%;font-size:64px;margin:0;line-height:.88}
 select,button{font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:3px;padding:5px 9px;cursor:pointer}
 button:hover,select:hover{border-color:var(--ink)}
 button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.orig{padding:0 48px 8px}
-.orig .cap{margin-top:8px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:34px 24px;padding:26px 48px 72px}
+#fams{display:flex;flex-wrap:wrap;gap:6px;padding:4px 48px 0}
+#fams button{display:flex;align-items:center;gap:7px;border-radius:14px;padding:4px 11px}
+#fams button i{width:9px;height:9px;border-radius:50%;background:var(--c);display:block}
+#fams button.on{background:var(--c);border-color:var(--c);color:#fff}
+#fams button.on i{background:#fff}
+#status{color:var(--mute);font-size:12px;padding:10px 48px 0;min-height:22px}
+h2.set{font-weight:900;font-stretch:75%;font-size:30px;margin:0;padding:26px 48px 0}
+h2.set span{font-weight:400;font-stretch:100%;font-size:14px;color:var(--mute);margin-inline-start:10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:34px 24px;padding:20px 48px 40px}
 @media(max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.grid{grid-template-columns:1fr}header,.grid,.orig{padding-left:20px;padding-right:20px}h1{font-size:44px}}
+@media(max-width:700px){.grid{grid-template-columns:1fr}header,.grid,#fams,#status,h2.set{padding-left:20px;padding-right:20px}h1{font-size:44px}}
 .card{cursor:pointer}
 .card canvas{width:100%;display:block}
-.cap{display:flex;gap:10px;align-items:baseline;margin-top:10px}
+.cap{display:flex;gap:10px;align-items:baseline;margin-top:10px;flex-wrap:wrap}
 .num{font-weight:900;font-stretch:75%;font-size:22px;min-width:26px}
 .name{font-weight:700;font-size:15px}
+.tag{font-size:11px;line-height:1;padding:4px 8px 3px;border-radius:10px;color:#fff;background:var(--c);align-self:center}
 .en{color:var(--mute);font-size:12px;direction:ltr;margin-inline-start:auto;white-space:nowrap}
 .desc{color:var(--mute);font-size:12.5px;margin-top:3px;line-height:1.5;padding-inline-start:36px}
 .card:hover .name{text-decoration:underline;text-underline-offset:3px}
 .pending{opacity:.35}
-#status{color:var(--mute);font-size:12px}
 
 #view{position:fixed;inset:0;display:none;grid-template-columns:320px 1fr;background:var(--bg);z-index:10}
 #view.open{display:grid}
@@ -42,7 +48,7 @@ button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 #stage{position:relative;overflow:hidden;cursor:ew-resize}
 #stage.pan{cursor:grab}
 #stage canvas{position:absolute;inset:0;width:100%;height:100%}
-.ph{display:flex;align-items:baseline;gap:10px}
+.ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .ph .num{font-size:34px}
 .ph .name{font-size:20px;font-weight:800}
 .pdesc{color:var(--mute);line-height:1.5;margin:6px 0 14px}
@@ -63,24 +69,27 @@ h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:
 <header>
   <div>
     <h1>הכרזה</h1>
-    <div class="sub">הצילום של הכרזת המדינה, 14 במאי 1948, נצרב בעשרים מנגנוני הנקודות. כל מנגנון שומר על מבנה התמונה ככל האפשר, ומשאיר בה את העקבות שלו. מעבר עם העכבר על תמונה מראה את המקור מתחתיה.<br>
+    <div class="sub">הצילום של הכרזת המדינה, 14 במאי 1948, נצרב בארבעים מנגנוני נקודות. הסדרה הראשונה היא עשרים המנגנונים של הנקודות. השנייה היא מחקר: פיזיקה, צמיחה אורגנית, גלקסיות, מתמטיקה ודחיסה. מעבר עם העכבר על תמונה מראה את המקור מתחתיה.<br>
     מקור: <a href="https://commons.wikimedia.org/wiki/File:Declaration_of_State_of_Israel_1948.jpg" target="_blank" rel="noopener">Wikimedia Commons</a></div>
   </div>
   <div class="controls">
+    <label>תנועה <select id="gMotion"><option value="1">פועלת</option><option value="0">עצורה</option></select></label>
     <label>צבע <select id="gMode"><option value="0">דיו על נייר</option><option value="1">נייר על דיו</option><option value="2">פלטה</option></select></label>
     <label>פלטה <select id="gPal"></select></label>
     <label>קנה מידה <select id="gScale"><option value="0.75">עדין</option><option value="1" selected>רגיל</option><option value="1.4">גס</option><option value="2">גס מאוד</option></select></label>
     <span class="links"><a href="index.html">20 השיטות</a> · <a href="memory.html">זיכרון סינתטי</a></span>
   </div>
 </header>
-<section class="orig">
-  <div id="status">טוען את הצילום…</div>
-</section>
-<main class="grid" id="grid"></main>
+<nav id="fams"></nav>
+<div id="status">טוען את הצילום…</div>
+<h2 class="set" id="set1">סדרה א<span>עשרים המנגנונים</span></h2>
+<main class="grid" id="grid1"></main>
+<h2 class="set" id="set2">סדרה ב<span>מחקר: עשרים מנגנונים חדשים</span></h2>
+<main class="grid" id="grid2"></main>
 
 <div id="view">
   <aside id="panel"></aside>
-  <div id="stage"><canvas id="full"></canvas><div class="hint" id="hint"></div></div>
+  <div id="stage"><canvas id="fullgl"></canvas><canvas id="fullov"></canvas><div class="hint" id="hint"></div></div>
 </div>
 
 <script src="declaration-data.js"></script>
@@ -352,8 +361,269 @@ function nearSelf(G, px, py, x, y, d) {
   return true;
 }
 
+
+/* ===== כלים לסדרה ב ===== */
+function toneGrid(gw) { const gh = Math.max(2, Math.round(gw * H / W)), c = W / gw, a = new Float32Array(gw * gh); for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) a[j * gw + i] = boxMean(IT, i * c, j * c, (i + 1) * c, (j + 1) * c); return { gw, gh, c, a }; }
+function bilin(arr, w, h, fx, fy) { fx = clamp(fx, 0, w - 1.001); fy = clamp(fy, 0, h - 1.001); const x = Math.floor(fx), y = Math.floor(fy), u = fx - x, v = fy - y, i = y * w + x; return lerp(lerp(arr[i], arr[i + 1], u), lerp(arr[i + w], arr[i + w + 1], u), v); }
+const gsample = (g, x, y) => bilin(g.a, g.gw, g.gh, x / g.c - 0.5, y / g.c - 0.5);
+// רסטר משושי כללי: tone(x, y) מחזיר את הטון שהנקודה צריכה לשאת
+function hexDots(s, tone) { const out = [], h = s * Math.sqrt(3) / 2, cell = s * h; for (let j = 0; j * h < H + h; j++) for (let i = -1; i * s < W + s; i++) { const x = i * s + (j & 1 ? s / 2 : 0), y = j * h, t = tone(x, y); if (t > 0.004) out.push([x, y, areaR(Math.min(t, 1.15), cell), Math.min(t, 1)]); } return out; }
+function boxBlurGrid(a, w, h, r) { if (r < 1) return a; const tmp = new Float32Array(w * h), out = new Float32Array(w * h), k = 2 * r + 1;
+  for (let y = 0; y < h; y++) { let s = 0; for (let x = -r; x <= r; x++) s += a[y * w + clamp(x, 0, w - 1)]; for (let x = 0; x < w; x++) { tmp[y * w + x] = s / k; s += a[y * w + clamp(x + r + 1, 0, w - 1)] - a[y * w + clamp(x - r, 0, w - 1)]; } }
+  for (let x = 0; x < w; x++) { let s = 0; for (let y = -r; y <= r; y++) s += tmp[clamp(y, 0, h - 1) * w + x]; for (let y = 0; y < h; y++) { out[y * w + x] = s / k; s += tmp[clamp(y + r + 1, 0, h - 1) * w + x] - tmp[clamp(y - r, 0, h - 1) * w + x]; } }
+  return out; }
+// דגימה לפי טון בדחייה, להתחלה של חלקיקים
+function sampleByTone(n, R, pow = 1) { const X = new Float32Array(n), Y = new Float32Array(n); let m = 0, g = 0; while (m < n && g < n * 400) { g++; const x = R() * W, y = R() * H; if (R() < Math.pow(T(x, y), pow)) { X[m] = x; Y[m] = y; m++; } } return { X: X.subarray(0, m), Y: Y.subarray(0, m), n: m }; }
+function d2xy(n, d) { let x = 0, y = 0, t = d; for (let s = 1; s < n; s *= 2) { const rx = 1 & (t >> 1), ry = 1 & (t ^ rx); if (ry === 0) { if (rx === 1) { x = s - 1 - x; y = s - 1 - y; } const tt = x; x = y; y = tt; } x += s * rx; y += s * ry; t >>= 2; } return [x, y]; }
+
+/* ===== סדרה ב: מחקר ===== */
+const DEFS2 = [
+{ id: 'relax', fam: 'physics', he: 'רלקסציה', en: 'Weighted Lloyd relaxation',
+  desc: 'נקודות טעונות שדוחות זו את זו עד שיווי משקל. הצפיפות שנשארת היא הטון.',
+  params: { seed: rg('seed', 1, 999, 1, 1), count: rg('נקודות', 2000, 40000, 500, 16000), iters: rg('איטרציות', 0, 20, 1, 8), rMin: rg('רדיוס מזערי', 0.3, 3, 0.05, 0.7), rMax: rg('רדיוס מרבי', 1, 5, 0.05, 2.2) },
+  gen(p, R, k) {
+    const g = toneGrid(800), { gw, gh, c, a } = g, n0 = Math.round(p.count / (k * k));
+    const px = new Float32Array(n0), py = new Float32Array(n0); let n = 0, guard = 0;
+    while (n < n0 && guard < n0 * 300) { guard++; const x = R() * gw, y = R() * gh; if (R() < a[(y | 0) * gw + (x | 0)]) { px[n] = x; py[n] = y; n++; } }
+    for (let it = 0; it < p.iters; it++) {
+      const cs = Math.max(2, Math.sqrt(gw * gh / n) * 1.1), cols = Math.ceil(gw / cs), rows = Math.ceil(gh / cs), head = new Int32Array(cols * rows).fill(-1), next = new Int32Array(n);
+      for (let i = 0; i < n; i++) { const ci = Math.min(cols - 1, (px[i] / cs) | 0) + Math.min(rows - 1, (py[i] / cs) | 0) * cols; next[i] = head[ci]; head[ci] = i; }
+      const sx = new Float64Array(n), sy = new Float64Array(n), sw = new Float64Array(n);
+      for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+        const w = a[j * gw + i]; if (w < 0.003) continue; const x = i + 0.5, y = j + 0.5, cx = Math.min(cols - 1, (x / cs) | 0), cy = Math.min(rows - 1, (y / cs) | 0);
+        let best = -1, bd = 1e18;
+        for (let rad = 1; rad < 6 && best < 0; rad++) for (let yy = cy - rad; yy <= cy + rad; yy++) { if (yy < 0 || yy >= rows) continue; for (let xx = cx - rad; xx <= cx + rad; xx++) { if (xx < 0 || xx >= cols) continue; for (let q = head[yy * cols + xx]; q >= 0; q = next[q]) { const d = (px[q] - x) ** 2 + (py[q] - y) ** 2; if (d < bd) { bd = d; best = q; } } } }
+        if (best >= 0) { sx[best] += w * x; sy[best] += w * y; sw[best] += w; }
+      }
+      for (let i = 0; i < n; i++) if (sw[i] > 0) { px[i] = sx[i] / sw[i]; py[i] = sy[i] / sw[i]; }
+    }
+    const out = []; for (let i = 0; i < n; i++) { const x = px[i] * c, y = py[i] * c, t = T(x, y); out.push([x, y, lerp(p.rMin, p.rMax, t) * k, t]); }
+    return out; } },
+{ id: 'chladni', fam: 'physics', he: 'כלדני', en: 'Chladni figures',
+  desc: 'חול על לוח רוטט. הגרגרים נאספים בקווי הצומת של גל עומד, והטון קובע כמה עבה הקו.',
+  params: { seed: rg('seed', 1, 999, 1, 1), n: rg('אופן n', 1, 20, 1, 9), m: rg('אופן m', 1, 20, 1, 4), plates: rg('לוחות', 1, 6, 1, 2), width: rg('עובי קו', 0.02, 0.6, 0.005, 0.22), r: rg('גרגר', 0.5, 3, 0.05, 1.05) },
+  gen(p, R, k) {
+    const out = [], r = p.r * k, G = new Grid(Math.max(4, r * 4)), A = Math.round(W * H / (Math.PI * r * r) * 1.6), P = p.plates, Pv = Math.max(1, Math.round(P * H / W)), n = p.n, m = p.m;
+    for (let a = 0; a < A && out.length < CAP; a++) {
+      const x = R() * W, y = R() * H, u = (x / W * P) % 1 * Math.PI, v = (y / H * Pv) % 1 * Math.PI, f = Math.cos(n * u) * Math.cos(m * v) - Math.cos(m * u) * Math.cos(n * v), t = T(x, y);
+      if (Math.abs(f) < p.width * (0.05 + 2.4 * t * t) && R() < Math.pow(t, 1.2) * 1.2 && G.fits(x, y, r, 0.15 * k)) { G.add(x, y, r); out.push([x, y, r, t]); }
+    }
+    return out; } },
+{ id: 'interference', fam: 'physics', he: 'התאבכות', en: 'Wave interference',
+  desc: 'כמה מקורות גלים על פני המים. הנקודה גדלה איפה שהגלים נפגשים ומתבטלת איפה שהם מבטלים זה את זה.',
+  params: { seed: rg('seed', 1, 999, 1, 1), sources: rg('מקורות', 1, 12, 1, 3), lambda: rg('אורך גל', 6, 120, 1, 28), contrast: rg('עוצמה', 0, 1, 0.01, 0.75), step: rg('צעד', 3, 14, 0.5, 5.5) },
+  gen(p, R, k) { const S_ = []; for (let i = 0; i < p.sources; i++) S_.push([R() * W, R() * H]); const lam = p.lambda * k, s = p.step * k;
+    return hexDots(s, (x, y) => { let f = 0; for (const [sx, sy] of S_) f += Math.cos(TAU * Math.hypot(x - sx, y - sy) / lam); f /= S_.length; return cellTone(x, y, s / 2) * ((1 - p.contrast) + p.contrast * (1 + f)); }); } },
+{ id: 'ising', fam: 'physics', he: 'איזינג', en: 'Ising model',
+  desc: 'כל תא הוא מגנט קטן. הצילום הוא שדה חיצוני, והטמפרטורה מחליטה כמה רעש מנצח את הסדר.',
+  params: { seed: rg('seed', 1, 999, 1, 1), temp: rg('טמפרטורה', 0.3, 5, 0.05, 1.8), field: rg('שדה חיצוני', 0, 4, 0.05, 1.6), sweeps: rg('סבבים', 0, 80, 1, 24), cell: rg('תא', 2, 8, 0.1, 3.2) },
+  gen(p, R, k) {
+    const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c), N = gw * gh, s = new Int8Array(N), h = new Float32Array(N), tt = new Float32Array(N);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const t = cellTone((i + 0.5) * c, (j + 0.5) * c, c / 2), q = j * gw + i; tt[q] = t; h[q] = p.field * (2 * t - 1); s[q] = R() < t ? 1 : -1; }
+    for (let sw = 0; sw < p.sweeps; sw++) for (let par = 0; par < 2; par++) for (let j = 0; j < gh; j++) for (let i = (j + par) & 1; i < gw; i += 2) {
+      const q = j * gw + i; let nb = 0; if (i > 0) nb += s[q - 1]; if (i < gw - 1) nb += s[q + 1]; if (j > 0) nb += s[q - gw]; if (j < gh - 1) nb += s[q + gw];
+      const dE = 2 * s[q] * (nb + h[q]); if (dE <= 0 || R() < Math.exp(-dE / p.temp)) s[q] = -s[q];
+    }
+    const out = []; for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const q = j * gw + i; if (s[q] > 0) out.push([(i + 0.5) * c, (j + 0.5) * c, c * 0.56, tt[q]]); }
+    return out; } },
+{ id: 'ink', fam: 'physics', he: 'דיו במים', en: 'Curl-noise advection',
+  desc: 'החלקיקים של הצילום נסחפים בזרם נוזל בלי מערבולות שנבלעות. הזמן מפרק את התמונה כמו טיפת דיו.',
+  params: { seed: rg('seed', 1, 999, 1, 1), count: rg('חלקיקים', 10000, 200000, 1000, 110000), time: rg('זמן', 0, 80, 1, 4), scale: rg('קנה מידה זרם', 0.5, 10, 0.1, 2.2), r: rg('רדיוס', 0.4, 3, 0.05, 0.85) },
+  gen(p, R, k, N) {
+    const P = sampleByTone(Math.round(p.count / (k * k)), R, 1.7), r = p.r * k, f = p.scale / 300, e = 0.01, step = 2 * k, out = [];
+    for (let i = 0; i < P.n; i++) { let x = P.X[i], y = P.Y[i]; const t = T(x, y);
+      for (let s = 0; s < p.time; s++) { const X = x * f, Y = y * f, vx = (N(X, Y + e) - N(X, Y - e)) / (2 * e), vy = -(N(X + e, Y) - N(X - e, Y)) / (2 * e); x += vx * step; y += vy * step; }
+      if (inside(x, y, r)) out.push([x, y, r, t]); }
+    return out; } },
+{ id: 'turing', fam: 'organic', he: 'טיורינג', en: 'Gray-Scott reaction-diffusion',
+  desc: 'שני חומרים מגיבים ומתפזרים ויוצרים דוגמה של עור או אלמוג. הצילום חי בתוך הדוגמה, בעובי שלה.',
+  params: { seed: rg('seed', 1, 999, 1, 1), pattern: sl('דפוס', ['תולעים', 'מבוך', 'אלמוג', 'פסים'], 0), cell: rg('תא', 2.5, 12, 0.5, 4), steps: rg('צעדים', 100, 5000, 50, 1400), seeds: rg('זרעים', 20, 4000, 10, 1200) },
+  gen(p, R, k) {
+    const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c), N = gw * gh;
+    let U = new Float32Array(N).fill(1), V = new Float32Array(N), U2 = new Float32Array(N), V2 = new Float32Array(N); const F = new Float32Array(N), K = new Float32Array(N), tt = new Float32Array(N);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const q = j * gw + i, t = cellTone((i + 0.5) * c, (j + 0.5) * c, c / 2); tt[q] = t;
+      const PR = [[0.029, 0.057], [0.039, 0.058], [0.0545, 0.062], [0.022, 0.051]][p.pattern]; F[q] = PR[0]; K[q] = PR[1]; }
+    // זרעים כגושים קטנים: רעש מפוזר בכל התאים דועך ונעלם
+    for (let b = 0; b < p.seeds; b++) { const ci = 2 + Math.floor(R() * (gw - 4)), cj = 2 + Math.floor(R() * (gh - 4)); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const q = (cj + dy) * gw + ci + dx; U[q] = 0.5; V[q] = 0.25 + R() * 0.1; } }
+    U2.set(U); V2.set(V);
+    for (let s = 0; s < p.steps; s++) {
+      for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const q = j * gw + i, u = U[q], v = V[q];
+        const lu = -u + 0.2 * (U[q - 1] + U[q + 1] + U[q - gw] + U[q + gw]) + 0.05 * (U[q - gw - 1] + U[q - gw + 1] + U[q + gw - 1] + U[q + gw + 1]);
+        const lv = -v + 0.2 * (V[q - 1] + V[q + 1] + V[q - gw] + V[q + gw]) + 0.05 * (V[q - gw - 1] + V[q - gw + 1] + V[q + gw - 1] + V[q + gw + 1]);
+        const uvv = u * v * v; U2[q] = u + lu - uvv + F[q] * (1 - u); V2[q] = v + 0.5 * lv + uvv - (F[q] + K[q]) * v; }
+      let tmp = U; U = U2; U2 = tmp; tmp = V; V = V2; V2 = tmp;
+    }
+    const out = []; for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const q = j * gw + i, v = V[q]; if (v > 0.16 && tt[q] > 0.01) out.push([(i + 0.5) * c, (j + 0.5) * c, c * 0.8 * Math.sqrt(tt[q]), tt[q]]); }
+    return out; } },
+{ id: 'physarum', fam: 'organic', he: 'ריר מוך', en: 'Physarum transport network',
+  desc: 'אלפי סוכנים של עובש רירי מריחים שובל ומזון. הצילום הוא המזון, והרשת שנבנית היא הזיכרון שלהם ממנו.',
+  params: { seed: rg('seed', 1, 999, 1, 1), agents: rg('סוכנים', 3000, 80000, 1000, 30000), steps: rg('צעדים', 20, 600, 10, 70), sa: rg('זווית חישה', 10, 90, 1, 30), sd: rg('מרחק חישה', 1, 20, 0.5, 4), ra: rg('זווית פנייה', 5, 90, 1, 25), food: rg('משקל המזון', 0, 4, 0.05, 2), cell: rg('תא', 2, 8, 0.5, 3) },
+  gen(p, R, k) {
+    const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c), N = gw * gh; let trail = new Float32Array(N); const food = new Float32Array(N);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) food[j * gw + i] = cellTone((i + 0.5) * c, (j + 0.5) * c, c / 2) * p.food * 6;
+    const P = sampleByTone(p.agents, R, 1), n = P.n, ax = new Float32Array(n), ay = new Float32Array(n), aa = new Float32Array(n);
+    for (let i = 0; i < n; i++) { ax[i] = P.X[i] / c; ay[i] = P.Y[i] / c; aa[i] = R() * TAU; }
+    const SA = p.sa * Math.PI / 180, RA = p.ra * Math.PI / 180, SD = p.sd;
+    const sense = (x, y) => { const i = x | 0, j = y | 0; if (i < 0 || j < 0 || i >= gw || j >= gh) return -1; const q = j * gw + i; return trail[q] + food[q]; };
+    for (let s = 0; s < p.steps; s++) {
+      for (let i = 0; i < n; i++) { const a = aa[i], x = ax[i], y = ay[i];
+        const f = sense(x + Math.cos(a) * SD, y + Math.sin(a) * SD), l = sense(x + Math.cos(a - SA) * SD, y + Math.sin(a - SA) * SD), r = sense(x + Math.cos(a + SA) * SD, y + Math.sin(a + SA) * SD);
+        if (f >= l && f >= r) { } else if (l > r) aa[i] -= RA; else if (r > l) aa[i] += RA; else aa[i] += (R() < 0.5 ? -RA : RA);
+        let nx = x + Math.cos(aa[i]), ny = y + Math.sin(aa[i]);
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) { aa[i] = R() * TAU; nx = clamp(nx, 0, gw - 0.01); ny = clamp(ny, 0, gh - 0.01); }
+        ax[i] = nx; ay[i] = ny; trail[(ny | 0) * gw + (nx | 0)] += 5; }
+      trail = boxBlurGrid(trail, gw, gh, 1); for (let q = 0; q < N; q++) trail[q] *= 0.9;
+    }
+    const sorted = Array.from(trail.filter((v, i) => i % 5 === 0)).sort((a, b) => a - b), top = sorted[Math.floor(sorted.length * 0.9)] || 1, out = [];
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const v = trail[j * gw + i] / top; if (v > 0.18) out.push([(i + 0.5) * c, (j + 0.5) * c, c * 0.6 * clamp(Math.sqrt(v), 0.25, 1.05), clamp(v, 0, 1)]); }
+    return out; } },
+{ id: 'colonize', fam: 'organic', he: 'צמיחה', en: 'Space colonization',
+  desc: 'צמח שגדל מלמטה ומחפש את האזורים הכהים, כמו שורשים שמחפשים מים. הענפים מתעבים לפי כמות הצמיחה שהם נושאים.',
+  params: { seed: rg('seed', 1, 999, 1, 1), attractors: rg('מטרות', 1000, 25000, 500, 9000), step: rg('צעד', 2, 10, 0.25, 4.5), infl: rg('טווח משיכה', 10, 90, 1, 36), kill: rg('טווח עצירה', 2, 20, 0.5, 7), roots: rg('שורשים', 1, 40, 1, 14), iters: rg('איטרציות', 20, 900, 10, 360), rMax: rg('עובי מרבי', 0.8, 8, 0.1, 3.4), origin: sl('מקור', ['מלמטה', 'מנקודות כהות'], 0) },
+  gen(p, R, k) {
+    const st = p.step * k, infl = p.infl * k, kill = p.kill * k, P = sampleByTone(Math.round(p.attractors), R, 1.25), Na = P.n, alive = new Uint8Array(Na).fill(1), nearI = new Int32Array(Na).fill(-1), nearD = new Float32Array(Na).fill(1e9);
+    const acs = infl, acols = Math.ceil(W / acs) + 1, arows = Math.ceil(H / acs) + 1, acell = Array.from({ length: acols * arows }, () => []);
+    for (let i = 0; i < Na; i++) acell[Math.min(arows - 1, (P.Y[i] / acs) | 0) * acols + Math.min(acols - 1, (P.X[i] / acs) | 0)].push(i);
+    const NX = [], NY = [], PAR = [];
+    const addNode = (x, y, par) => { const id = NX.length; NX.push(x); NY.push(y); PAR.push(par);
+      const cx = (x / acs) | 0, cy = (y / acs) | 0;
+      for (let yy = cy - 1; yy <= cy + 1; yy++) { if (yy < 0 || yy >= arows) continue; for (let xx = cx - 1; xx <= cx + 1; xx++) { if (xx < 0 || xx >= acols) continue; for (const i of acell[yy * acols + xx]) { if (!alive[i]) continue; const d = Math.hypot(P.X[i] - x, P.Y[i] - y); if (d < kill) alive[i] = 0; else if (d < infl && d < nearD[i]) { nearD[i] = d; nearI[i] = id; } } } }
+      return id; };
+    for (let i = 0; i < p.roots; i++) { if (p.origin === 0) addNode((i + 0.5) / p.roots * W + (R() - 0.5) * W / p.roots * 0.5, H - 1, -1); else { const q = Math.floor(R() * Na); addNode(P.X[q], P.Y[q], -1); } }
+    for (let it = 0; it < p.iters && NX.length < CAP; it++) {
+      const acc = new Map();
+      for (let i = 0; i < Na; i++) { if (!alive[i] || nearI[i] < 0) continue; const id = nearI[i], d = nearD[i] || 1, dx = (P.X[i] - NX[id]) / d, dy = (P.Y[i] - NY[id]) / d; const a = acc.get(id); if (a) { a[0] += dx; a[1] += dy; } else acc.set(id, [dx, dy]); }
+      if (!acc.size) break;
+      for (const [id, [dx, dy]] of acc) { const l = Math.hypot(dx, dy); if (l < 1e-6) continue; const x = NX[id] + dx / l * st + (R() - 0.5) * st * 0.2, y = NY[id] + dy / l * st + (R() - 0.5) * st * 0.2; if (inside(x, y)) addNode(x, y, id); }
+    }
+    const n = NX.length, desc = new Float32Array(n).fill(1); for (let i = n - 1; i >= 0; i--) if (PAR[i] >= 0) desc[PAR[i]] += desc[i];
+    const out = []; for (let i = 0; i < n; i++) out.push([NX[i], NY[i], Math.max(0.45 * k, Math.min(p.rMax * k, 0.42 * k * Math.pow(desc[i], 0.42))), T(NX[i], NY[i])]);
+    return out; } },
+{ id: 'cracks', fam: 'organic', he: 'סדקים', en: 'Worley cracks',
+  desc: 'אדמה שמתייבשת ונסדקת. באזורים הכהים התאים קטנים והסדקים צפופים.',
+  params: { seed: rg('seed', 1, 999, 1, 1), cells: rg('תאים', 200, 10000, 100, 2600), width: rg('עובי סדק', 0.3, 6, 0.05, 1.5), step: rg('צעד', 1.5, 6, 0.1, 2.2) },
+  gen(p, R, k) {
+    const P = sampleByTone(Math.round(p.cells / (k * k)), R, 1.3), n = P.n, cs = Math.sqrt(W * H / n) * 1.2, cols = Math.ceil(W / cs), rows = Math.ceil(H / cs), head = new Int32Array(cols * rows).fill(-1), next = new Int32Array(n);
+    for (let i = 0; i < n; i++) { const ci = Math.min(cols - 1, (P.X[i] / cs) | 0) + Math.min(rows - 1, (P.Y[i] / cs) | 0) * cols; next[i] = head[ci]; head[ci] = i; }
+    const s = p.step * k, out = [];
+    for (let y = s / 2; y < H; y += s) for (let x = s / 2; x < W; x += s) {
+      const cx = Math.min(cols - 1, (x / cs) | 0), cy = Math.min(rows - 1, (y / cs) | 0); let d1 = 1e18, d2 = 1e18;
+      for (let rad = 1; rad < 8; rad++) { for (let yy = cy - rad; yy <= cy + rad; yy++) { if (yy < 0 || yy >= rows) continue; for (let xx = cx - rad; xx <= cx + rad; xx++) { if (xx < 0 || xx >= cols || (Math.abs(yy - cy) < rad && Math.abs(xx - cx) < rad && rad > 1)) continue; for (let q = head[yy * cols + xx]; q >= 0; q = next[q]) { const d = (P.X[q] - x) ** 2 + (P.Y[q] - y) ** 2; if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; } } } if (d2 < 1e17 && Math.sqrt(d2) < (rad - 0.5) * cs) break; }
+      if (d2 > 1e17) continue; const t = T(x, y);
+      if (Math.sqrt(d2) - Math.sqrt(d1) < p.width * k * (0.45 + t)) out.push([x, y, s * 0.52, t]);
+    }
+    return out; } },
+{ id: 'rotation', fam: 'galactic', he: 'סיבוב דיפרנציאלי', en: 'Differential rotation',
+  desc: 'גלקסיה לא מסתובבת כגוף אחד. הפנים מהיר מהחוץ, והצילום נמתח לזרועות.',
+  params: { twist: rg('פיתול', 0, 14, 0.05, 3.5), core: rg('גרעין', 10, 500, 5, 110), power: rg('דעיכה', 0.3, 2.5, 0.05, 1.2), cx: rg('מרכז אופקי', 0, 1, 0.01, 0.5), cy: rg('מרכז אנכי', 0, 1, 0.01, 0.55), step: rg('צעד', 3, 14, 0.5, 5) },
+  gen(p, R, k) { const cx = p.cx * W, cy = p.cy * H, s = p.step * k;
+    return hexDots(s, (x, y) => { const dx = x - cx, dy = y - cy, r = Math.hypot(dx, dy), a = -p.twist * Math.pow(p.core / (r + p.core), p.power), ca = Math.cos(a), sa = Math.sin(a), sx = cx + dx * ca - dy * sa, sy = cy + dx * sa + dy * ca; return inside(sx, sy) ? cellTone(sx, sy, s / 2) : 0; }); } },
+{ id: 'lens', fam: 'galactic', he: 'עדשה כבידתית', en: 'Gravitational lensing',
+  desc: 'מסה כבדה מכופפת את האור שעובר לידה. הצילום נראה מאחורי חור שחור, עם טבעת איינשטיין.',
+  params: { seed: rg('seed', 1, 999, 1, 1), mass: rg('רדיוס איינשטיין', 10, 400, 1, 150), lenses: rg('עדשות', 1, 4, 1, 1), cx: rg('מרכז אופקי', 0, 1, 0.01, 0.5), cy: rg('מרכז אנכי', 0, 1, 0.01, 0.5), step: rg('צעד', 3, 14, 0.5, 5) },
+  gen(p, R, k) { const L = [[p.cx * W, p.cy * H]]; for (let i = 1; i < p.lenses; i++) L.push([R() * W, R() * H]); const e2 = p.mass * p.mass / p.lenses, s = p.step * k;
+    return hexDots(s, (x, y) => { let bx = x, by = y; for (const [lx, ly] of L) { const dx = x - lx, dy = y - ly, d2 = dx * dx + dy * dy + 1; bx -= e2 * dx / d2; by -= e2 * dy / d2; } return inside(bx, by) ? cellTone(bx, by, s / 2) : 0; }); } },
+{ id: 'collapse', fam: 'galactic', he: 'קריסה כבידתית', en: 'Gravitational collapse',
+  desc: 'חלקיקי הצילום נמשכים לאזורים הצפופים, כמו גז שמתכווץ לכוכבים ולצבירים.',
+  params: { seed: rg('seed', 1, 999, 1, 1), r: rg('רדיוס', 0.5, 3, 0.05, 1.4), steps: rg('צעדים', 0, 40, 1, 4), smooth: rg('טווח כבידה', 2, 40, 0.5, 10), pull: rg('משיכה', 0, 3, 0.05, 0.5) },
+  gen(p, R, k) {
+    const r = p.r * k, s0 = r * 1.9, X = [], Y = [], Tt = [];
+    for (let y = s0 / 2; y < H; y += s0) for (let x = s0 / 2; x < W; x += s0) { const t = cellTone(x, y, s0 / 2); if (t > R()) { X.push(x + (R() - 0.5) * s0); Y.push(y + (R() - 0.5) * s0); Tt.push(t); } }
+    const gw = 240, c = W / gw, gh = Math.ceil(H / c), rad = Math.max(1, Math.round(p.smooth / c)), n = X.length;
+    for (let st = 0; st < p.steps; st++) {
+      let d = new Float32Array(gw * gh); for (let i = 0; i < n; i++) { const gi = clamp((X[i] / c) | 0, 0, gw - 1), gj = clamp((Y[i] / c) | 0, 0, gh - 1); d[gj * gw + gi]++; }
+      d = boxBlurGrid(boxBlurGrid(d, gw, gh, rad), gw, gh, rad); let gm = 1e-6; const GX = new Float32Array(gw * gh), GY = new Float32Array(gw * gh);
+      for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const q = j * gw + i; GX[q] = d[q + 1] - d[q - 1]; GY[q] = d[q + gw] - d[q - gw]; gm = Math.max(gm, Math.hypot(GX[q], GY[q])); }
+      for (let i = 0; i < n; i++) { const fx = X[i] / c - 0.5, fy = Y[i] / c - 0.5; X[i] += p.pull * c * 1.5 * bilin(GX, gw, gh, fx, fy) / gm * 4; Y[i] += p.pull * c * 1.5 * bilin(GY, gw, gh, fx, fy) / gm * 4; }
+    }
+    const out = []; for (let i = 0; i < n; i++) if (inside(X[i], Y[i])) out.push([X[i], Y[i], r, Tt[i]]);
+    return out; } },
+{ id: 'hilbert', fam: 'math', he: 'עקומת הילברט', en: 'Hilbert curve dither',
+  desc: 'קו אחד שעובר בכל תא בלי להרים את העט. לאורכו נצברת שגיאה, ונקודה נופלת כשהיא עוברת את הסף.',
+  params: { seed: rg('seed', 1, 999, 1, 1), cell: rg('תא', 1.8, 10, 0.1, 3), memory: rg('שכחה', 0, 0.5, 0.005, 0), jitter: rg('רעד בסף', 0, 0.8, 0.01, 0) },
+  gen(p, R, k) { const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c); let n = 1; while (n < Math.max(gw, gh)) n *= 2; let acc = 0; const out = [];
+    for (let d = 0; d < n * n; d++) { const [x, y] = d2xy(n, d); if (x >= gw || y >= gh) continue; const px = (x + 0.5) * c, py = (y + 0.5) * c, t = cellTone(px, py, c / 2); acc = acc * (1 - p.memory) + t; if (acc >= 0.5 + (R() - 0.5) * p.jitter) { out.push([px, py, c * 0.56, t]); acc -= 1; } }
+    return out; } },
+{ id: 'quasicrystal', fam: 'math', he: 'קוואזי גביש', en: 'Quasicrystal',
+  desc: 'סדר בלי חזרה. סכום של גלים בכמה כיוונים יוצר סימטריה שאי אפשר לרצף, והנקודות יושבות בשיאים שלה.',
+  params: { sym: rg('סימטריה', 3, 15, 1, 7), lambda: rg('אורך גל', 4, 40, 0.5, 9) },
+  gen(p, R, k) { const lam = p.lambda * k, g = lam / 5, gw = Math.ceil(W / g) + 2, gh = Math.ceil(H / g) + 2, f = new Float32Array(gw * gh), K = TAU / lam, C = [], S_ = [];
+    for (let i = 0; i < p.sym; i++) { const a = Math.PI * i / p.sym; C.push(Math.cos(a) * K); S_.push(Math.sin(a) * K); }
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = (i - 1) * g, y = (j - 1) * g; let v = 0; for (let q = 0; q < p.sym; q++) v += Math.cos(x * C[q] + y * S_[q]); f[j * gw + i] = v; }
+    const pts = []; for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const q = j * gw + i, v = f[q]; if (v > 0 && v >= f[q - 1] && v > f[q + 1] && v >= f[q - gw] && v > f[q + gw] && v >= f[q - gw - 1] && v > f[q + gw + 1] && v >= f[q - gw + 1] && v > f[q + gw - 1]) pts.push([(i - 1) * g, (j - 1) * g]); }
+    const cell = W * H / Math.max(1, pts.length), out = []; for (const [x, y] of pts) { if (!inside(x, y)) continue; const t = cellTone(x, y, lam / 3); if (t > 0.004) out.push([x, y, areaR(t, cell), t]); }
+    return out; } },
+{ id: 'droste', fam: 'math', he: 'דרוסטה', en: 'Droste spiral',
+  desc: 'התמונה מכילה את עצמה בספירלה אינסופית. מיפוי לוגריתמי קולע את הצילום לתוך עצמו.',
+  params: { scale: rg('יחס חזרה', 1.3, 12, 0.05, 4), cx: rg('מרכז אופקי', 0, 1, 0.01, 0.5), cy: rg('מרכז אנכי', 0, 1, 0.01, 0.5), step: rg('צעד', 3, 14, 0.5, 5) },
+  gen(p, R, k) { const cx = p.cx * W, cy = p.cy * H, Lg = Math.log(p.scale), kk = Lg / TAU, R0 = Math.hypot(W, H) / 2, l0 = Math.log(R0), s = p.step * k;
+    return hexDots(s, (x, y) => { const zx = x - cx, zy = y - cy, rr = Math.hypot(zx, zy); if (rr < 0.5) return 0; const a = Math.log(rr), b = Math.atan2(zy, zx); let na = a + b * kk; const nb = b - a * kk; na = na - Lg * Math.floor((na - (l0 - Lg)) / Lg); const m = Math.exp(na), sx = cx + m * Math.cos(nb), sy = cy + m * Math.sin(nb); return inside(sx, sy) ? cellTone(sx, sy, s / 2) : 0; }); } },
+{ id: 'contours', fam: 'math', he: 'קווי גובה', en: 'Topographic contours',
+  desc: 'הצילום כמפה טופוגרפית. כל רמת טון היא קו גובה, והקו עבה יותר ככל שהוא עמוק יותר.',
+  params: { levels: rg('רמות', 3, 40, 1, 16), smooth: rg('החלקה', 0, 8, 1, 2), spacing: rg('מרווח נקודות', 1.2, 8, 0.1, 2.4), rMin: rg('עובי מזערי', 0.2, 2, 0.05, 0.45), rMax: rg('עובי מרבי', 0.5, 4, 0.05, 1.7) },
+  gen(p, R, k) { const g = toneGrid(400), { gw, gh, c } = g, a = boxBlurGrid(g.a, gw, gh, p.smooth), out = [], sp = p.spacing * k;
+    const node = (i, j) => a[clamp(j, 0, gh - 1) * gw + clamp(i, 0, gw - 1)], P_ = (i, j) => [(i + 0.5) * c, (j + 0.5) * c];
+    for (let L = 0; L < p.levels; L++) { const lv = (L + 0.5) / p.levels, rr = lerp(p.rMin, p.rMax, lv) * k; let carry = 0;
+      for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
+        const A = node(i, j), B = node(i + 1, j), C = node(i + 1, j + 1), D = node(i, j + 1), id = (A > lv ? 1 : 0) | (B > lv ? 2 : 0) | (C > lv ? 4 : 0) | (D > lv ? 8 : 0); if (id === 0 || id === 15) continue;
+        const top = () => [i + (lv - A) / (B - A), j], right = () => [i + 1, j + (lv - B) / (C - B)], bottom = () => [i + (lv - D) / (C - D), j + 1], left = () => [i, j + (lv - A) / (D - A)];
+        const segs = { 1: [[left, top]], 2: [[top, right]], 3: [[left, right]], 4: [[right, bottom]], 5: [[left, top], [right, bottom]], 6: [[top, bottom]], 7: [[left, bottom]], 8: [[left, bottom]], 9: [[top, bottom]], 10: [[top, right], [left, bottom]], 11: [[right, bottom]], 12: [[left, right]], 13: [[top, right]], 14: [[left, top]] }[id];
+        for (const [e1, e2] of segs) { const [x1, y1] = P_(...e1()), [x2, y2] = P_(...e2()), len = Math.hypot(x2 - x1, y2 - y1); let d = carry; while (d < len) { const u = d / len; out.push([lerp(x1, x2, u), lerp(y1, y2, u), rr, lv]); d += sp; } carry = d - len; }
+      } }
+    return out; } },
+{ id: 'fourier', fam: 'glitch', he: 'פורייה', en: 'DCT low-pass',
+  desc: 'הצילום מפורק לגלים ונשארים רק התדרים הנמוכים. ליד כל קצה מופיעות הדים של גלים שנחתכו.',
+  params: { freq: rg('תדרים שנשמרים', 1, 160, 1, 42), step: rg('צעד', 3, 14, 0.5, 5) },
+  gen(p, R, k) { const g = toneGrid(240), { gw, gh } = g, a = g.a;
+    const tab = (n) => { const t = new Float32Array(n * n); for (let u = 0; u < n; u++) for (let x = 0; x < n; x++) t[u * n + x] = Math.cos(Math.PI / n * (x + 0.5) * u) * Math.sqrt((u ? 2 : 1) / n); return t; };
+    const Tx = tab(gw), Ty = tab(gh), tmp = new Float32Array(gw * gh), Cf = new Float32Array(gw * gh);
+    for (let y = 0; y < gh; y++) for (let u = 0; u < gw; u++) { let s = 0; for (let x = 0; x < gw; x++) s += a[y * gw + x] * Tx[u * gw + x]; tmp[y * gw + u] = s; }
+    for (let u = 0; u < gw; u++) for (let v = 0; v < gh; v++) { let s = 0; for (let y = 0; y < gh; y++) s += tmp[y * gw + u] * Ty[v * gh + y]; Cf[v * gw + u] = (u + v * gw / gh < p.freq) ? s : 0; }
+    for (let u = 0; u < gw; u++) for (let y = 0; y < gh; y++) { let s = 0; for (let v = 0; v < gh; v++) s += Cf[v * gw + u] * Ty[v * gh + y]; tmp[y * gw + u] = s; }
+    const rec = new Float32Array(gw * gh); for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { let s = 0; for (let u = 0; u < gw; u++) s += tmp[y * gw + u] * Tx[u * gw + x]; rec[y * gw + x] = s; }
+    const G2 = { gw, gh, c: g.c, a: rec }, s = p.step * k; return hexDots(s, (x, y) => clamp(gsample(G2, x, y), 0, 1.1)); } },
+{ id: 'svd', fam: 'glitch', he: 'דרגה נמוכה', en: 'Low-rank SVD',
+  desc: 'הצילום כמטריצה שנדחסת למעט וקטורים. זה מרחב לטנטי ליניארי בצורה הכי חשופה: שתי וערב של שורות ועמודות.',
+  params: { seed: rg('seed', 1, 999, 1, 1), rank: rg('דרגה', 1, 50, 1, 6), step: rg('צעד', 3, 14, 0.5, 5) },
+  gen(p, R, k) { const g = toneGrid(240), { gw, gh } = g, A = Float32Array.from(g.a), rec = new Float32Array(gw * gh);
+    for (let q = 0; q < p.rank; q++) { let v = new Float32Array(gw).map(() => R() - 0.5), u = new Float32Array(gh), sig = 0;
+      for (let it = 0; it < 30; it++) { for (let y = 0; y < gh; y++) { let s = 0; for (let x = 0; x < gw; x++) s += A[y * gw + x] * v[x]; u[y] = s; } let nu = Math.hypot(...u) || 1; for (let y = 0; y < gh; y++) u[y] /= nu;
+        for (let x = 0; x < gw; x++) { let s = 0; for (let y = 0; y < gh; y++) s += A[y * gw + x] * u[y]; v[x] = s; } sig = Math.hypot(...v) || 1; for (let x = 0; x < gw; x++) v[x] /= sig; }
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const d = sig * u[y] * v[x]; rec[y * gw + x] += d; A[y * gw + x] -= d; } }
+    const G2 = { gw, gh, c: g.c, a: rec }, s = p.step * k; return hexDots(s, (x, y) => clamp(gsample(G2, x, y), 0, 1.1)); } },
+{ id: 'life', fam: 'glitch', he: 'משחק החיים', en: 'Cellular automaton',
+  desc: 'הצילום הוא דור ראשון של אוטומט תאי. כל דור מוחק עוד מהזיכרון ומשאיר צורות שחיות לפי חוקים משלהן.',
+  params: { seed: rg('seed', 1, 999, 1, 1), gens: rg('דורות', 0, 120, 1, 3), cell: rg('תא', 2, 10, 0.1, 3.2), rule: sl('חוק', ['החיים B3/S23', 'HighLife B36/S23', 'יום ולילה B3678/S34678', 'מבוך B3/S12345'], 0) },
+  gen(p, R, k) { const RULES = [[[3], [2, 3]], [[3, 6], [2, 3]], [[3, 6, 7, 8], [3, 4, 6, 7, 8]], [[3], [1, 2, 3, 4, 5]]], [bs, ss] = RULES[p.rule], Bm = new Uint8Array(9), Sm = new Uint8Array(9); bs.forEach(x => Bm[x] = 1); ss.forEach(x => Sm[x] = 1);
+    const c = p.cell * k, gw = Math.ceil(W / c), gh = Math.ceil(H / c), N = gw * gh; let A = new Uint8Array(N), B = new Uint8Array(N); const tt = new Float32Array(N);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const q = j * gw + i, t = cellTone((i + 0.5) * c, (j + 0.5) * c, c / 2); tt[q] = t; A[q] = t > R() ? 1 : 0; }
+    for (let g = 0; g < p.gens; g++) { for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const x = i + dx, y = j + dy; if (x >= 0 && y >= 0 && x < gw && y < gh) n += A[y * gw + x]; } const q = j * gw + i; B[q] = A[q] ? Sm[n] : Bm[n]; } const t = A; A = B; B = t; }
+    const out = []; for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const q = j * gw + i; if (A[q]) out.push([(i + 0.5) * c, (j + 0.5) * c, c * 0.56, tt[q]]); }
+    return out; } },
+{ id: 'pixelsort', fam: 'glitch', he: 'מיון פיקסלים', en: 'Pixel sorting',
+  desc: 'בכל שורה, רצפים של טונים בינוניים ממוינים לפי בהירות. הצילום נמרח בכיוון אחד, כמו קובץ שנשבר.',
+  params: { lo: rg('סף תחתון', 0, 1, 0.01, 0.28), hi: rg('סף עליון', 0, 1, 0.01, 0.82), dir: sl('כיוון', ['אופקי', 'אנכי'], 0), order: sl('סדר', ['כהה קודם', 'בהיר קודם'], 0), step: rg('צעד', 2.5, 14, 0.5, 4.5) },
+  gen(p, R, k) { const s = p.step * k, gw = Math.ceil(W / s), gh = Math.ceil(H / s), t = new Float32Array(gw * gh);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) t[j * gw + i] = cellTone((i + 0.5) * s, (j + 0.5) * s, s / 2);
+    const lines = p.dir === 0 ? gh : gw, len = p.dir === 0 ? gw : gh, at = (l, q) => p.dir === 0 ? l * gw + q : q * gw + l;
+    for (let l = 0; l < lines; l++) { let q = 0; while (q < len) { if (t[at(l, q)] < p.lo || t[at(l, q)] > p.hi) { q++; continue; } let e = q; while (e < len && t[at(l, e)] >= p.lo && t[at(l, e)] <= p.hi) e++; const run = []; for (let z = q; z < e; z++) run.push(t[at(l, z)]); run.sort((a, b) => p.order ? a - b : b - a); for (let z = q; z < e; z++) t[at(l, z)] = run[z - q]; q = e; } }
+    const out = []; for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const v = t[j * gw + i]; if (v > 0.004) out.push([(i + 0.5) * s, (j + 0.5) * s, areaR(v, s * s), v]); }
+    return out; } }
+];
+
+/* ===== משפחות ===== */
+const FAM = {
+  order: { he: 'סדר', c: '#3a6ea5' }, growth: { he: 'צמיחה', c: '#4f8a4b' }, conc: { he: 'ריכוז', c: '#b8336a' }, fractal: { he: 'פרקטלים', c: '#7a4fb0' }, break: { he: 'שבירה', c: '#e8442c' },
+  physics: { he: 'פיזיקה', c: '#1f8f8f' }, organic: { he: 'אורגני', c: '#9a7a1a' }, galactic: { he: 'גלקטי', c: '#0b1d51' }, math: { he: 'מתמטי', c: '#c06a00' }, glitch: { he: 'גליץ\'', c: '#d629b1' }
+};
+const FAMOF = { poisson: 'conc', grid: 'order', hex: 'order', halftone: 'order', phyllotaxis: 'growth', rings: 'order', spiral: 'growth', density: 'conc', clusters: 'conc', noise: 'conc', packing: 'fractal', quadtree: 'fractal', sierpinski: 'fractal', cantor: 'fractal', vicsek: 'fractal', nested: 'fractal', flow: 'growth', disorder: 'break', edge: 'conc', levy: 'fractal' };
+DEFS.forEach(d => { d.fam = FAMOF[d.id]; d.set = 1; });
+DEFS2.forEach(d => { d.set = 2; });
+const ALL = DEFS.concat(DEFS2);
+
 /* ===== מצב ובנייה ===== */
-const V = DEFS.map((def, i) => ({ def, i, params: defaults(def), D: null, ms: 0, cache: null }));
+Object.assign(S, { motion: 1, wander: 1.2, wspeed: 0.3, pulse: 6, pspeed: 0.35, mouseR: 60, mouseS: 1, fam: '' });
+const V = ALL.map((def, i) => ({ def, i, params: defaults(def), D: null, ms: 0, visible: false, dirty: true }));
 function defaults(def) { const o = {}; for (const k in def.params) o[k] = def.params[k].d; return o; }
 let colors = { fg: INK, bg: PAPER, ramp: [] };
 function setColors() {
@@ -361,18 +631,81 @@ function setColors() {
   else if (S.mode === 1) colors = { fg: PAPER, bg: INK, ramp: ramp([INK, PAPER], NQ) };
   else { const st = PALETTES[S.pal] || PALETTES['default']; colors = { fg: st[0], bg: PAPER, ramp: ramp(st.slice().reverse(), NQ) }; }
 }
+const hex3 = h => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 // ramp[0] הוא הרקע, ramp[NQ-1] הוא הדיו המלא
 function generate(v) {
   const t0 = performance.now(), p = v.params, R = mulberry32(((p.seed || 1) * 2654435761) >>> 0 || 1), N = makeNoise(p.seed || 1);
   const raw = v.def.gen(p, R, S.scale, N).slice(0, CAP), n = raw.length;
   const fill = v.def.kind === 'fill' || S.mode === 2, groups = new Map();
   for (let i = 0; i < n; i++) { const q = fill ? clamp(Math.round(raw[i][3] * (NQ - 1)), 0, NQ - 1) : -1; if (!groups.has(q)) groups.set(q, []); groups.get(q).push(i); }
-  const D = { n, X: new Float32Array(n), Y: new Float32Array(n), R: new Float32Array(n), groups: [] }; let w = 0;
+  const D = { n, X: new Float32Array(n), Y: new Float32Array(n), R: new Float32Array(n), groups: [], inst: null }; let w = 0;
   for (const [q, idx] of groups) { if (q === 0) continue; D.groups.push({ start: w, end: w + idx.length, color: q < 0 ? colors.fg : colors.ramp[q] }); for (const i of idx) { D.X[w] = raw[i][0]; D.Y[w] = raw[i][1]; D.R[w] = raw[i][2]; w++; } }
-  D.n = w; v.D = D; v.ms = performance.now() - t0; v.cache = null;
+  D.n = w;
+  // נתוני מופע ל WebGL: x, y, r, פאזה 1, פאזה 2, r, g, b
+  const inst = new Float32Array(w * 8), ph = mulberry32((p.seed || 1) + 5);
+  for (const g of D.groups) { const [cr, cg, cb] = hex3(g.color); for (let i = g.start; i < g.end; i++) { const o = i * 8; inst[o] = D.X[i]; inst[o + 1] = D.Y[i]; inst[o + 2] = D.R[i]; inst[o + 3] = ph() * TAU; inst[o + 4] = ph() * TAU; inst[o + 5] = cr; inst[o + 6] = cg; inst[o + 7] = cb; } }
+  D.inst = inst; v.D = D; v.ms = performance.now() - t0; v.dirty = true; v.phys = null;
 }
 
-/* ===== ציור, לפני ואחרי ===== */
+/* ===== WebGL: עיגול לכל מופע, תנועה בשיידר ===== */
+const VS = `#version 300 es
+layout(location=0) in vec2 aC; layout(location=1) in vec3 aD; layout(location=2) in vec2 aP; layout(location=3) in vec3 aCol; layout(location=4) in vec2 aOff;
+uniform vec2 uView; uniform vec3 uXf; uniform float uT, uWan, uWs, uPul, uPs;
+out vec2 vUV; out vec3 vCol; out float vR;
+void main(){
+  float r = aD.z * (1.0 + uPul * sin(uT * uPs + aP.y * 1.7));
+  vec2 p = aD.xy + aOff + uWan * vec2(sin(uT * uWs + aP.x), cos(uT * uWs * 0.83 + aP.y));
+  float rp = r * uXf.x, e = rp + 1.0;
+  vec2 px = p * uXf.x + uXf.yz + aC * e;
+  vUV = aC * e; vR = rp; vCol = aCol;
+  vec2 cl = px / uView * 2.0 - 1.0; gl_Position = vec4(cl.x, -cl.y, 0.0, 1.0);
+}`;
+const FS = `#version 300 es
+precision mediump float; in vec2 vUV; in vec3 vCol; in float vR; out vec4 o;
+void main(){ float d = length(vUV); float a = clamp(vR - d + 0.5, 0.0, 1.0) * min(1.0, vR * vR * 4.0); if (a <= 0.0) discard; o = vec4(vCol * a, a); }`;
+class DotGL {
+  constructor(cv) {
+    this.cv = cv; const gl = this.gl = cv.getContext('webgl2', { premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true, alpha: false });
+    if (!gl) throw new Error('webgl2');
+    const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const pr = this.pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr);
+    this.u = {}; for (const k of ['uView', 'uXf', 'uT', 'uWan', 'uWs', 'uPul', 'uPs']) this.u[k] = gl.getUniformLocation(pr, k);
+    this.quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.quad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    this.res = new Map();
+  }
+  ensure(v) {
+    const gl = this.gl; let r = this.res.get(v);
+    if (r && r.D === v.D) return r;
+    if (r) this.drop(v);
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, v.D.inst, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 0); gl.vertexAttribDivisor(1, 1);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 12); gl.vertexAttribDivisor(2, 1);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 32, 20); gl.vertexAttribDivisor(3, 1);
+    const ob = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ob); gl.bufferData(gl.ARRAY_BUFFER, v.D.n * 8, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(4, 1);
+    gl.bindVertexArray(null);
+    r = { vao, ib, ob, D: v.D, n: v.D.n }; this.res.set(v, r); return r;
+  }
+  drop(v) { const r = this.res.get(v); if (!r) return; const gl = this.gl; gl.deleteVertexArray(r.vao); gl.deleteBuffer(r.ib); gl.deleteBuffer(r.ob); this.res.delete(v); }
+  draw(v, pw, ph, scale, ox, oy, time, offsets) {
+    const gl = this.gl, bg = hex3(colors.bg);
+    if (this.cv.width < pw || this.cv.height < ph) { this.cv.width = Math.max(this.cv.width, pw); this.cv.height = Math.max(this.cv.height, ph); }
+    gl.viewport(0, this.cv.height - ph, pw, ph); gl.enable(gl.SCISSOR_TEST); gl.scissor(0, this.cv.height - ph, pw, ph);
+    gl.clearColor(bg[0], bg[1], bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.disable(gl.SCISSOR_TEST);
+    if (!v.D || !v.D.n) return;
+    const r = this.ensure(v), m = S.motion ? 1 : 0;
+    gl.useProgram(this.pr); gl.uniform2f(this.u.uView, pw, ph); gl.uniform3f(this.u.uXf, scale, ox, oy); gl.uniform1f(this.u.uT, time);
+    gl.uniform1f(this.u.uWan, S.wander * m); gl.uniform1f(this.u.uWs, S.wspeed * TAU); gl.uniform1f(this.u.uPul, S.pulse / 100 * m); gl.uniform1f(this.u.uPs, S.pspeed * TAU);
+    gl.bindVertexArray(r.vao);
+    if (offsets) { gl.bindBuffer(gl.ARRAY_BUFFER, r.ob); gl.bufferSubData(gl.ARRAY_BUFFER, 0, offsets); }
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, r.n); gl.bindVertexArray(null);
+  }
+}
+
+/* ===== ציור דו ממדי, לייצוא ===== */
 function drawDots(c, v, scale, ox, oy, pw, ph) {
   c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = colors.bg; c.fillRect(0, 0, pw, ph);
   const D = v.D; if (!D) return;
@@ -381,8 +714,7 @@ function drawDots(c, v, scale, ox, oy, pw, ph) {
   c.setTransform(1, 0, 0, 1, 0, 0);
 }
 // המקור נחשף מצד ימין של הקו, האחרי משמאל לו
-function compose(ctx, dotsCanvas, split, scale, ox, oy, pw, ph, dpr) {
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(dotsCanvas, 0, 0);
+function overlay(ctx, split, scale, ox, oy, pw, ph, dpr) {
   const sx = split * pw;
   if (split < 1) { ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, pw - sx, ph); ctx.clip(); ctx.fillStyle = PAPER; ctx.fillRect(sx, 0, pw - sx, ph); ctx.drawImage(IMG, ox, oy, W * scale, H * scale); ctx.restore(); }
   if (split > 0 && split < 1) {
@@ -394,66 +726,100 @@ function compose(ctx, dotsCanvas, split, scale, ox, oy, pw, ph, dpr) {
 }
 
 /* ===== גלריה ===== */
-const grid = document.getElementById('grid'), pad = n => String(n).padStart(2, '0');
-const dprOf = () => Math.min(2, devicePixelRatio || 1);
-function tileRender(v) {
+const pad = n => String(n).padStart(2, '0'), dprOf = () => Math.min(2, devicePixelRatio || 1);
+const tileGL = new DotGL(document.createElement('canvas'));
+const tagHTML = f => `<span class="tag" style="--c:${FAM[f].c}">${FAM[f].he}</span>`;
+function tileDraw(v, time) {
   if (!v.D) return; const cv = v.cv, dpr = dprOf(), pw = Math.round(cv.clientWidth * dpr), ph = Math.round(cv.clientHeight * dpr);
   if (!pw || !ph) return;
-  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; v.cache = null; }
-  const scale = pw / W;
-  if (!v.cache || v.cache.width !== pw) { const o = document.createElement('canvas'); o.width = pw; o.height = ph; drawDots(o.getContext('2d'), v, scale, 0, 0, pw, ph); v.cache = o; }
-  compose(v.ctx, v.cache, v.split ?? 1, scale, 0, 0, pw, ph, dpr);
-  cv.classList.remove('pending');
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const scale = pw / W; tileGL.draw(v, pw, ph, scale, 0, 0, time);
+  v.ctx.drawImage(tileGL.cv, 0, 0, pw, ph, 0, 0, pw, ph);
+  overlay(v.ctx, v.split ?? 1, scale, 0, 0, pw, ph, dpr);
+  cv.classList.remove('pending'); v.dirty = false;
 }
+const io = new IntersectionObserver(es => { for (const e of es) { const v = V[+e.target.dataset.i]; v.visible = e.isIntersecting; if (v.visible) v.dirty = true; else tileGL.drop(v); } }, { rootMargin: '150px' });
 function buildGallery() {
-  grid.innerHTML = '';
+  for (const s of [1, 2]) document.getElementById('grid' + s).innerHTML = '';
   V.forEach(v => {
-    const card = document.createElement('div'); card.className = 'card';
-    card.innerHTML = `<canvas class="pending" style="aspect-ratio:${W}/${H}"></canvas><div class="cap"><span class="num">${pad(v.i + 1)}</span><span class="name">${v.def.he}</span><span class="en">${v.def.en}</span></div><div class="desc">${v.def.desc}</div>`;
-    grid.appendChild(card); v.cv = card.querySelector('canvas'); v.ctx = v.cv.getContext('2d');
-    v.cv.addEventListener('pointermove', e => { const r = v.cv.getBoundingClientRect(); v.split = clamp((e.clientX - r.left) / r.width, 0, 1); tileRender(v); });
-    v.cv.addEventListener('pointerleave', () => { v.split = 1; tileRender(v); });
+    const card = document.createElement('div'); card.className = 'card'; card.dataset.fam = v.def.fam;
+    card.innerHTML = `<canvas class="pending" data-i="${v.i}" style="aspect-ratio:${W}/${H}"></canvas><div class="cap"><span class="num">${pad(v.i + 1)}</span><span class="name">${v.def.he}</span>${tagHTML(v.def.fam)}<span class="en">${v.def.en}</span></div><div class="desc">${v.def.desc}</div>`;
+    document.getElementById('grid' + v.def.set).appendChild(card); v.card = card; v.cv = card.querySelector('canvas'); v.ctx = v.cv.getContext('2d');
+    v.cv.addEventListener('pointermove', e => { const r = v.cv.getBoundingClientRect(); v.split = clamp((e.clientX - r.left) / r.width, 0, 1); v.dirty = true; });
+    v.cv.addEventListener('pointerleave', () => { v.split = 1; v.dirty = true; });
     card.onclick = () => openView(v.i);
+    io.observe(v.cv);
   });
 }
-new ResizeObserver(() => V.forEach(v => { v.cache = null; tileRender(v); })).observe(grid);
+new ResizeObserver(() => V.forEach(v => v.dirty = true)).observe(document.body);
+function buildFams() {
+  const nav = document.getElementById('fams');
+  const b = (key, label, c) => `<button data-f="${key}" style="--c:${c}" class="${S.fam === key ? 'on' : ''}"><i></i>${label}</button>`;
+  nav.innerHTML = b('', 'הכול', '#141414') + Object.entries(FAM).map(([k, f]) => b(k, f.he, f.c)).join('');
+  nav.onclick = e => { const t = e.target.closest('button'); if (!t) return; S.fam = t.dataset.f; buildFams(); applyFilter(); };
+}
+function applyFilter() {
+  V.forEach(v => { if (v.card) v.card.style.display = !S.fam || v.def.fam === S.fam ? '' : 'none'; });
+  for (const s of [1, 2]) { const any = V.some(v => v.def.set === s && (!S.fam || v.def.fam === S.fam)); document.getElementById('set' + s).style.display = any ? '' : 'none'; document.getElementById('grid' + s).style.display = any ? '' : 'none'; }
+}
 
 let genToken = 0;
 function generateAll() {
   const tok = ++genToken; let i = 0; const st = document.getElementById('status');
   V.forEach(v => v.cv && v.cv.classList.add('pending'));
-  (function next() { if (tok !== genToken) return; if (i >= V.length) { st.textContent = ''; return; } st.textContent = `צורב ${i + 1} מתוך ${V.length}…`; const v = V[i++]; generate(v); tileRender(v); setTimeout(next, 0); })();
+  (function next() { if (tok !== genToken) return; if (i >= V.length) { st.textContent = ''; return; } const v = V[i++]; st.textContent = `צורב ${i} מתוך ${V.length}: ${v.def.he}`; setTimeout(() => { if (tok !== genToken) return; generate(v); tileGL.drop(v); v.dirty = true; next(); }, 0); })();
 }
 
 /* ===== תצוגה מלאה ===== */
-const view = document.getElementById('view'), panel = document.getElementById('panel'), full = document.getElementById('full'), fctx = full.getContext('2d'), stage = document.getElementById('stage'), hint = document.getElementById('hint');
-let cur = -1, F = { split: 0.5, zoom: 0, panX: 0, panY: 0, cache: null, key: '' }, timer = 0;
-function openView(i) { cur = (i + V.length) % V.length; F.cache = null; view.classList.add('open'); document.body.style.overflow = 'hidden'; buildPanel(); requestAnimationFrame(renderFull); }
-function closeView() { view.classList.remove('open'); document.body.style.overflow = ''; if (cur >= 0) tileRender(V[cur]); cur = -1; }
+const view = document.getElementById('view'), panel = document.getElementById('panel'), stage = document.getElementById('stage'), hint = document.getElementById('hint');
+const fullCv = document.getElementById('fullgl'), ovCv = document.getElementById('fullov'), octx = ovCv.getContext('2d');
+let fullGL = null; try { fullGL = new DotGL(fullCv); } catch (e) { }
+let cur = -1, F = { split: 0.5, zoom: 0, panX: 0, panY: 0, mode: 'cmp' }, timer = 0, ovDirty = true;
+const mouse = { x: 0, y: 0, on: false };
+function openView(i) { cur = (i + V.length) % V.length; view.classList.add('open'); document.body.style.overflow = 'hidden'; ovDirty = true; buildPanel(); }
+function closeView() { view.classList.remove('open'); document.body.style.overflow = ''; if (cur >= 0) { fullGL && fullGL.drop(V[cur]); V[cur].dirty = true; } cur = -1; }
 function fullGeom() {
   const dpr = dprOf(), pw = Math.round(stage.clientWidth * dpr), ph = Math.round(stage.clientHeight * dpr), fit = Math.min(pw / W, ph / H) * 0.96;
   const scale = F.zoom === 0 ? fit : F.zoom * dpr, ox = (pw - W * scale) / 2 + F.panX * dpr, oy = (ph - H * scale) / 2 + F.panY * dpr;
   return { dpr, pw, ph, scale, ox, oy };
 }
-function renderFull() {
-  if (cur < 0) return; const v = V[cur], g = fullGeom();
-  if (full.width !== g.pw || full.height !== g.ph) { full.width = g.pw; full.height = g.ph; }
-  const key = [g.pw, g.ph, g.scale, g.ox, g.oy].join(',');
-  if (!F.cache || F.key !== key || F.v !== v.D) { const o = F.cache && F.cache.width === g.pw && F.cache.height === g.ph ? F.cache : document.createElement('canvas'); o.width = g.pw; o.height = g.ph; drawDots(o.getContext('2d'), v, g.scale, g.ox, g.oy, g.pw, g.ph); F.cache = o; F.key = key; F.v = v.D; }
-  compose(fctx, F.cache, F.split, g.scale, g.ox, g.oy, g.pw, g.ph, g.dpr);
-  hint.textContent = F.zoom ? 'גרירה: הזזה · Shift ותנועה: קו ההשוואה · Esc: חזרה' : 'תנועת העכבר מזיזה את קו ההשוואה · חצים: מנגנון הבא · Esc: חזרה';
+// קפיץ לבית ושיכוך קריטי, העכבר גוף דוחה, כמו ב tz
+function physics(v, dt) {
+  const D = v.D; if (!D || !D.n) return null;
+  if (!v.phys || v.phys.n !== D.n) v.phys = { n: D.n, off: new Float32Array(D.n * 2), vel: new Float32Array(D.n * 2), active: false };
+  const P = v.phys; if (!mouse.on && !P.active) return P.off;
+  const w = TAU * 2, k = w * w, c = 2 * w, sub = 2, h = dt / sub, mr = S.mouseR; let act = false;
+  for (let q = 0; q < sub; q++) for (let i = 0; i < D.n; i++) {
+    const o = i * 2; let dx = P.off[o], dy = P.off[o + 1], vx = P.vel[o], vy = P.vel[o + 1];
+    if (dx !== 0 || dy !== 0 || vx !== 0 || vy !== 0) { vx += (-k * dx - c * vx) * h; vy += (-k * dy - c * vy) * h; dx += vx * h; dy += vy * h; if (Math.abs(dx) + Math.abs(dy) + Math.abs(vx) + Math.abs(vy) < 1e-3) { dx = dy = vx = vy = 0; } else act = true; }
+    if (mouse.on) { const px = D.X[i] + dx - mouse.x, py = D.Y[i] + dy - mouse.y; if (Math.abs(px) < mr + 40 && Math.abs(py) < mr + 40) { const d = Math.hypot(px, py), m = mr + D.R[i]; if (d < m && d > 1e-4) { const nx = px / d, ny = py / d, push = (m - d) * S.mouseS; dx += nx * push; dy += ny * push; const vn = vx * nx + vy * ny; if (vn < 0) { vx -= vn * nx; vy -= vn * ny; } act = true; } } }
+    P.off[o] = dx; P.off[o + 1] = dy; P.vel[o] = vx; P.vel[o + 1] = vy;
+  }
+  P.active = act; return P.off;
 }
-new ResizeObserver(() => { F.cache = null; renderFull(); }).observe(stage);
+function fullFrame(time, dt) {
+  if (cur < 0 || !fullGL) return; const v = V[cur], g = fullGeom();
+  if (fullCv.width !== g.pw || fullCv.height !== g.ph) { fullCv.width = g.pw; fullCv.height = g.ph; }
+  if (ovCv.width !== g.pw || ovCv.height !== g.ph) { ovCv.width = g.pw; ovCv.height = g.ph; ovDirty = true; }
+  const off = F.mode === 'before' ? null : physics(v, dt);
+  fullGL.draw(v, g.pw, g.ph, g.scale, g.ox, g.oy, time, off);
+  if (ovDirty) { octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, g.pw, g.ph); overlay(octx, F.split, g.scale, g.ox, g.oy, g.pw, g.ph, g.dpr); ovDirty = false;
+    hint.textContent = F.zoom ? 'גרירה: הזזה · Shift ותנועה: קו ההשוואה · Esc: חזרה' : (F.mode === 'cmp' ? 'תנועת העכבר מזיזה את קו ההשוואה · חצים: מנגנון הבא · Esc: חזרה' : 'העכבר דוחף את הנקודות · חצים: מנגנון הבא · Esc: חזרה'); }
+}
 let drag = null;
 stage.addEventListener('pointerdown', e => { if (F.zoom) { drag = { x: e.clientX, y: e.clientY, px: F.panX, py: F.panY }; stage.setPointerCapture(e.pointerId); } });
 stage.addEventListener('pointerup', () => drag = null);
+stage.addEventListener('pointerleave', () => mouse.on = false);
 stage.addEventListener('pointermove', e => {
-  if (drag) { F.panX = drag.px + e.clientX - drag.x; F.panY = drag.py + e.clientY - drag.y; requestAnimationFrame(renderFull); return; }
-  if (F.mode === 'cmp' && (!F.zoom || e.shiftKey)) { const r = stage.getBoundingClientRect(); F.split = clamp((e.clientX - r.left) / r.width, 0, 1); renderFull(); }
+  const r = stage.getBoundingClientRect(), g = fullGeom();
+  mouse.x = ((e.clientX - r.left) * g.dpr - g.ox) / g.scale; mouse.y = ((e.clientY - r.top) * g.dpr - g.oy) / g.scale; mouse.on = F.mode === 'after' || (F.mode === 'cmp' && (e.clientX - r.left) / r.width < F.split);
+  if (drag) { F.panX = drag.px + e.clientX - drag.x; F.panY = drag.py + e.clientY - drag.y; ovDirty = true; return; }
+  if (F.mode === 'cmp' && (!F.zoom || e.shiftKey)) { F.split = clamp((e.clientX - r.left) / r.width, 0, 1); ovDirty = true; }
 });
+new ResizeObserver(() => ovDirty = true).observe(stage);
 addEventListener('keydown', e => {
   if (cur < 0) return; if (/INPUT|SELECT/.test(document.activeElement.tagName) && e.key !== 'Escape') return;
-  if (e.key === 'Escape') closeView(); else if (e.key === 'ArrowLeft') openView(cur + 1); else if (e.key === 'ArrowRight') openView(cur - 1);
+  if (e.key === 'Escape') closeView(); else if (e.key === 'ArrowLeft') { fullGL && fullGL.drop(V[cur]); openView(cur + 1); } else if (e.key === 'ArrowRight') { fullGL && fullGL.drop(V[cur]); openView(cur - 1); }
 });
 
 function rowRange(l, P, val, on) {
@@ -467,30 +833,38 @@ function rowSelect(l, opts, val, on) {
   r.querySelector('select').onchange = e => on(+e.target.value); panel.appendChild(r);
 }
 const sec = t => { const h = document.createElement('h3'); h.textContent = t; panel.appendChild(h); };
-function regen() { clearTimeout(timer); timer = setTimeout(() => { const v = V[cur]; generate(v); F.cache = null; renderFull(); info(); }, 80); }
+function regen() { clearTimeout(timer); timer = setTimeout(() => { const v = V[cur]; generate(v); fullGL && fullGL.drop(v); tileGL.drop(v); info(); }, 90); }
 function info() { const el = document.getElementById('pInfo'), v = V[cur]; if (el && v && v.D) el.textContent = `${v.D.n.toLocaleString('he-IL')} נקודות · ${v.ms.toFixed(0)}ms`; }
 function buildPanel() {
-  const v = V[cur], d = v.def; F.mode = F.mode || 'cmp';
+  const v = V[cur], d = v.def;
   panel.innerHTML = `<div class="nav"><button id="pPrev">הקודם</button><button id="pBack">לגלריה</button><button id="pNext">הבא</button></div>
-  <div class="ph"><span class="num">${pad(cur + 1)}</span><span class="name">${d.he}</span></div><div class="en">${d.en}</div><div class="pdesc">${d.desc}</div><div class="info" id="pInfo"></div>`;
-  panel.querySelector('#pPrev').onclick = () => openView(cur - 1); panel.querySelector('#pNext').onclick = () => openView(cur + 1); panel.querySelector('#pBack').onclick = closeView;
+  <div class="ph"><span class="num">${pad(cur + 1)}</span><span class="name">${d.he}</span>${tagHTML(d.fam)}</div><div class="en">${d.en}</div><div class="pdesc">${d.desc}</div><div class="info" id="pInfo"></div>`;
+  panel.querySelector('#pPrev').onclick = () => { fullGL && fullGL.drop(v); openView(cur - 1); }; panel.querySelector('#pNext').onclick = () => { fullGL && fullGL.drop(v); openView(cur + 1); }; panel.querySelector('#pBack').onclick = closeView;
   sec('תצוגה');
   const b1 = document.createElement('div'); b1.className = 'btns';
-  for (const [t, m, s] of [['לפני', 'before', 1e-9], ['השוואה', 'cmp', 0.5], ['אחרי', 'after', 1]]) { const b = document.createElement('button'); b.textContent = t; if (F.mode === m) b.className = 'on'; b.onclick = () => { F.mode = m; F.split = m === 'before' ? 0 : s; buildPanel(); renderFull(); }; b1.appendChild(b); }
+  for (const [t, m, s] of [['לפני', 'before', 0], ['השוואה', 'cmp', 0.5], ['אחרי', 'after', 1]]) { const b = document.createElement('button'); b.textContent = t; if (F.mode === m) b.className = 'on'; b.onclick = () => { F.mode = m; F.split = s; ovDirty = true; buildPanel(); }; b1.appendChild(b); }
   panel.appendChild(b1);
   const b2 = document.createElement('div'); b2.className = 'btns'; b2.style.marginTop = '6px';
-  for (const [t, z] of [['התאמה', 0], ['1:1', 1], ['2:1', 2], ['4:1', 4]]) { const b = document.createElement('button'); b.textContent = t; if (F.zoom === z) b.className = 'on'; b.onclick = () => { F.zoom = z; F.panX = F.panY = 0; stage.classList.toggle('pan', !!z); buildPanel(); F.cache = null; renderFull(); }; b2.appendChild(b); }
+  for (const [t, z] of [['התאמה', 0], ['1:1', 1], ['2:1', 2], ['4:1', 4]]) { const b = document.createElement('button'); b.textContent = t; if (F.zoom === z) b.className = 'on'; b.onclick = () => { F.zoom = z; F.panX = F.panY = 0; stage.classList.toggle('pan', !!z); ovDirty = true; buildPanel(); }; b2.appendChild(b); }
   panel.appendChild(b2);
   sec('פרמטרים');
   for (const k in d.params) { const P = d.params[k]; if (P.t === 'r') rowRange(P.l, P, v.params[k], x => { v.params[k] = x; regen(); }); else rowSelect(P.l, P.o, v.params[k], x => { v.params[k] = x; regen(); }); }
+  sec('תנועה (לכל המנגנונים)');
+  rowSelect('תנועה', ['עצורה', 'פועלת'], S.motion, x => { S.motion = x; document.getElementById('gMotion').value = x; V.forEach(q => q.dirty = true); });
+  rowRange('נדידה', { min: 0, max: 6, step: 0.1 }, S.wander, x => S.wander = x);
+  rowRange('מהירות נדידה', { min: 0, max: 2, step: 0.01 }, S.wspeed, x => S.wspeed = x);
+  rowRange('פעימה %', { min: 0, max: 40, step: 1 }, S.pulse, x => S.pulse = x);
+  rowRange('מהירות פעימה', { min: 0, max: 2, step: 0.01 }, S.pspeed, x => S.pspeed = x);
+  rowRange('רדיוס עכבר', { min: 10, max: 250, step: 1 }, S.mouseR, x => S.mouseR = x);
+  rowRange('עוצמת עכבר', { min: 0, max: 1, step: 0.01 }, S.mouseS, x => S.mouseS = x);
   sec('טון (לכל המנגנונים)');
-  const retone = () => { clearTimeout(timer); timer = setTimeout(() => { computeTone(); V.forEach(x => x.D = null); generate(V[cur]); F.cache = null; renderFull(); info(); generateAll(); }, 150); };
+  const retone = () => { clearTimeout(timer); timer = setTimeout(() => { computeTone(); generate(V[cur]); fullGL && fullGL.drop(V[cur]); info(); generateAll(); }, 150); };
   rowRange('נקודה שחורה', { min: 0, max: 0.5, step: 0.01 }, S.black, x => { S.black = x; retone(); });
   rowRange('נקודה לבנה', { min: 0.5, max: 1, step: 0.01 }, S.white, x => { S.white = x; retone(); });
   rowRange('עקומה', { min: 0.4, max: 2.5, step: 0.05 }, S.gamma, x => { S.gamma = x; retone(); });
   sec('ייצוא');
   const ex = document.createElement('div'); ex.className = 'btns'; ex.innerHTML = '<button data-x="png">PNG</button><button data-x="svg">SVG</button><button data-x="reset">איפוס פרמטרים</button>';
-  ex.onclick = e => { const x = e.target.dataset.x; if (x === 'reset') { v.params = defaults(d); generate(v); F.cache = null; buildPanel(); renderFull(); } else if (x) exportVariant(v, x); };
+  ex.onclick = e => { const x = e.target.dataset.x; if (x === 'reset') { v.params = defaults(d); generate(v); fullGL && fullGL.drop(v); buildPanel(); } else if (x) exportVariant(v, x); };
   panel.appendChild(ex); info();
 }
 
@@ -505,21 +879,31 @@ function exportVariant(v, type) {
 }
 
 /* ===== שליטה כללית ===== */
-const gMode = document.getElementById('gMode'), gPal = document.getElementById('gPal'), gScale = document.getElementById('gScale');
+const gMode = document.getElementById('gMode'), gPal = document.getElementById('gPal'), gScale = document.getElementById('gScale'), gMotion = document.getElementById('gMotion');
 gPal.innerHTML = Object.keys(PALETTES).map(k => `<option>${k}</option>`).join('');
 const restyle = (retone) => { if (retone) computeTone(); setColors(); generateAll(); };
 gMode.onchange = () => { const was = S.mode; S.mode = +gMode.value; restyle((was === 1) !== (S.mode === 1)); };
 gPal.onchange = () => { S.pal = gPal.value; if (S.mode === 2) restyle(false); };
 gScale.onchange = () => { S.scale = +gScale.value; restyle(false); };
+gMotion.onchange = () => { S.motion = +gMotion.value; V.forEach(v => v.dirty = true); };
+
+/* ===== לולאה ===== */
+let last = performance.now(), frame = 0;
+function loop(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000), time = now / 1000; last = now; frame++;
+  if (cur >= 0) fullFrame(time, dt);
+  else for (const v of V) { if (!v.visible || !v.D || !v.cv || v.card.style.display === 'none') continue; if (S.motion ? ((frame + v.i) % 2 === 0) : v.dirty) tileDraw(v, time); else if (v.dirty) tileDraw(v, time); }
+  requestAnimationFrame(loop);
+}
 
 /* ===== טעינה ===== */
 IMG = new Image();
 IMG.onload = () => {
   H = Math.round(W * IMG.naturalHeight / IMG.naturalWidth);
-  try { analyseImage(); } catch (e) { document.getElementById('status').textContent = 'הדפדפן חסם קריאה של הצילום. צריך לפתוח את הדף דרך GitHub Pages או שרת מקומי, ולא ישירות מהקובץ.'; return; }
-  setColors(); buildGallery(); generateAll();
+  try { analyseImage(); } catch (e) { document.getElementById('status').textContent = 'הדפדפן חסם קריאה של הצילום.'; return; }
+  setColors(); buildFams(); buildGallery(); applyFilter(); generateAll(); requestAnimationFrame(loop);
 };
-IMG.onerror = () => { document.getElementById('status').textContent = 'הקובץ declaration.jpg לא נמצא ליד הדף.'; };
+IMG.onerror = () => { document.getElementById('status').textContent = 'הצילום לא נמצא ליד הדף.'; };
 IMG.src = window.DECL_SRC || 'declaration.jpg';
 </script>
 </body>
