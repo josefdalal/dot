@@ -83,6 +83,7 @@ h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:
   <div id="stage"><canvas id="full"></canvas><div class="hint" id="hint"></div></div>
 </div>
 
+<script src="declaration-data.js"></script>
 <script>
 'use strict';
 /* ===== בסיס ===== */
@@ -519,7 +520,7 @@ IMG.onload = () => {
   setColors(); buildGallery(); generateAll();
 };
 IMG.onerror = () => { document.getElementById('status').textContent = 'הקובץ declaration.jpg לא נמצא ליד הדף.'; };
-IMG.src = 'declaration.jpg';
+IMG.src = window.DECL_SRC || 'declaration.jpg';
 </script>
 </body>
 </html>
