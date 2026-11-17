@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>זיכרון סינתטי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3efe6;--ink:#141414;--mute:#8a857b;--line:#d9d3c6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Noto Sans Hebrew',system-ui,sans-serif}
+#app{display:grid;grid-template-columns:340px 1fr;height:100vh}
+#panel{overflow:auto;padding:22px 22px 48px;border-inline-end:1px solid var(--line);font-size:13px}
+#stage{position:relative;overflow:hidden}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%}
+h1{font-weight:900;font-stretch:75%;font-size:40px;margin:0;line-height:.9}
+.lead{color:var(--mute);line-height:1.5;margin:8px 0 4px}
+h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:22px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.row{margin:9px 0}
+.row .lab{display:flex;justify-content:space-between;margin-bottom:3px}
+.row .val{color:var(--mute);direction:ltr;font-variant-numeric:tabular-nums}
+.row input[type=range]{width:100%;accent-color:var(--ink);margin:0;direction:ltr}
+.row select{width:100%}
+.row input[type=color]{width:100%;height:26px;border:1px solid var(--line);background:none;padding:0 2px}
+select,button{font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:3px;padding:5px 9px;cursor:pointer}
+button:hover,select:hover{border-color:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.info{color:var(--mute);font-size:12px;margin-top:8px;line-height:1.5}
+#thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px}
+#thumbs img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer;opacity:.75;outline:2px solid transparent}
+#thumbs img.on{opacity:1;outline-color:var(--ink)}
+#drop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--mute);font-size:15px;line-height:1.7;pointer-events:none}
+#stage.over{outline:2px dashed var(--ink);outline-offset:-12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel"></aside>
+  <div id="stage"><canvas id="cv"></canvas><div id="drop">גררו לכאן את כל הגרסאות של אותו רגע<br>(רצוי 20, אותה הנחיה, אותו יחס)</div></div>
+</div>
+<input type="file" id="file" accept="image/*" multiple hidden>
+<input type="file" id="refFile" accept="image/*" hidden>
+<script>
+'use strict';
+/* ===== בסיס ===== */
+const TAU = Math.PI * 2, LONG = 1200, SRC_LONG = 800, AN_LONG = 200;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { if (b <= a) return x >= a ? 1 : 0; const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gaussFn(R) { return () => { let u = 0; while (u === 0) u = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * R()); }; }
+function makeNoise(seed) {
+  const r = mulberry32(seed * 7919 + 13), p = new Uint8Array(512), perm = [];
+  for (let i = 0; i < 256; i++) perm[i] = i;
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+  const G = [[1, 1], [-1, 1], [1, -1], [-1, -1], [1.41, 0], [-1.41, 0], [0, 1.41], [0, -1.41]];
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10), dot = (h, x, y) => G[h & 7][0] * x + G[h & 7][1] * y;
+  return (x, y) => {
+    const X = Math.floor(x), Y = Math.floor(y), xf = x - X, yf = y - Y, xi = X & 255, yi = Y & 255;
+    const u = fade(xf), v = fade(yf);
+    const a = lerp(dot(p[p[xi] + yi], xf, yf), dot(p[p[xi + 1] + yi], xf - 1, yf), u);
+    const b = lerp(dot(p[p[xi] + yi + 1], xf, yf - 1), dot(p[p[xi + 1] + yi + 1], xf - 1, yf - 1), u);
+    return clamp(0.5 + 0.7 * lerp(a, b, v), 0, 1);
+  };
+}
+
+/* ===== צבע (OKLCH, כמו ב tz) ===== */
+const toLin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const toSrgb = c => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+function hexToLch(hex) {
+  const h = hex.replace('#', ''); const r = toLin(parseInt(h.slice(0, 2), 16) / 255), g = toLin(parseInt(h.slice(2, 4), 16) / 255), b = toLin(parseInt(h.slice(4, 6), 16) / 255);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s, C = Math.hypot(A, B);
+  return [L, C, C < 0.02 ? NaN : Math.atan2(B, A)];
+}
+function lchToRgb(L, C, h) {
+  if (isNaN(h)) h = 0; const a = C * Math.cos(h), b = C * Math.sin(h);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s].map(v => Math.round(clamp(toSrgb(clamp(v, 0, 1)), 0, 1) * 255));
+}
+function paletteLUT(stops, n = 64) {
+  const P = stops.map(hexToLch); if (P.length === 1) P.push(P[0]); const out = [];
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1) * (P.length - 1), k = Math.min(P.length - 2, Math.floor(u)), t = u - k, A = P[k], B = P[k + 1];
+    let ha = A[2], hb = B[2]; if (isNaN(ha)) ha = hb; if (isNaN(hb)) hb = ha;
+    let h = NaN; if (!isNaN(ha)) { let d = hb - ha; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; h = ha + d * t; }
+    out.push(lchToRgb(lerp(A[0], B[0], t), lerp(A[1], B[1], t), h));
+  }
+  return out;
+}
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbHex = c => '#' + c.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const PALETTES = {
+  'default': ['#0b1d51', '#3a6ea5', '#ff6b6b'], 'S_001': ['#000000', '#3b4044', '#485d6a'], 'S_002': ['#208df3', '#27912e', '#d629b1'],
+  'ember': ['#2b0a3d', '#b8336a', '#ff9e3d', '#ffe8a3'], 'intro': ['#000000', '#6b6b6b', '#d6d6d6'], 'ספיה': ['#2a1d12', '#7a5a3a', '#d9c3a0']
+};
+
+/* ===== רשת מרחבית ===== */
+class Grid {
+  constructor(w, h, cs) { this.cs = cs; this.cols = Math.ceil(w / cs) + 1; this.rows = Math.ceil(h / cs) + 1; this.cells = Array.from({ length: this.cols * this.rows }, () => []); this.x = []; this.y = []; this.r = []; }
+  range(x, y, R) { const c = this.cs; return [clamp(Math.floor((x - R) / c), 0, this.cols - 1), clamp(Math.floor((x + R) / c), 0, this.cols - 1), clamp(Math.floor((y - R) / c), 0, this.rows - 1), clamp(Math.floor((y + R) / c), 0, this.rows - 1)]; }
+  add(x, y, r) { const id = this.x.length; this.x.push(x); this.y.push(y); this.r.push(r); const [x0, x1, y0, y1] = this.range(x, y, r); for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) this.cells[j * this.cols + i].push(id); }
+  fits(x, y, r, gap) { const R = r + gap, [x0, x1, y0, y1] = this.range(x, y, R); for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) { const c = this.cells[j * this.cols + i]; for (let k = 0; k < c.length; k++) { const id = c[k]; if (Math.hypot(x - this.x[id], y - this.y[id]) - this.r[id] < R - 1e-6) return false; } } return true; }
+}
+
+/* ===== מצב ===== */
+const S = {
+  seed: 7, view: 0, source: -1, drive: 0,
+  blur: 3, lo: 0.25, hi: 0.75, gamma: 1, boost: 1,
+  order: 0, step: 10, angle: 15, dMin: 0.04, dMax: 1, tone: 1, invert: 0, gap: 0.4,
+  breakM: 0, strength: 1, spread: 1, drop: 0.15, bMin: 0.15, bMax: 0.45, shift: 1, bandH: 2,
+  color: 0, palette: 'ספיה', ink: '#141414', bg: '#f3efe6', mark: 0, accent: '#ff6b6b', sat: 1,
+  motion: 1, wander: 3, wspeed: 0.3
+};
+const DEF = JSON.parse(JSON.stringify(S));
+let IM = [], REF = null; // גרסאות, והמקור ההיסטורי: { name, url, img, data (sw*sh*4), lum (aw*ah) }
+let RW = LONG, RH = 675, sw, sh, aw, ah, MEAN = null, VMAP = null, DOTS = null, demo = false, hasDev = false;
+
+/* ===== ניתוח: יישור, ממוצע, שונות וסטייה מהמקור ===== */
+function fitCover(img, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true });
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, s = Math.max(w / iw, h / ih);
+  x.imageSmoothingQuality = 'high'; x.drawImage(img, (w - iw * s) / 2, (h - ih * s) / 2, iw * s, ih * s);
+  return x.getImageData(0, 0, w, h).data;
+}
+function setFrame(img) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, ar = iw / ih;
+  RW = ar >= 1 ? LONG : Math.round(LONG * ar); RH = ar >= 1 ? Math.round(LONG / ar) : LONG;
+  sw = Math.round(RW * SRC_LONG / LONG); sh = Math.round(RH * SRC_LONG / LONG);
+  aw = Math.round(RW * AN_LONG / LONG); ah = Math.round(RH * AN_LONG / LONG);
+}
+function prep(img) {
+  const data = fitCover(img, sw, sh), small = fitCover(img, aw, ah), lum = new Float32Array(aw * ah);
+  for (let i = 0; i < lum.length; i++) lum[i] = (0.2126 * small[i * 4] + 0.7152 * small[i * 4 + 1] + 0.0722 * small[i * 4 + 2]) / 255;
+  return { data, lum };
+}
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+async function loadImages(sources, names, isDemo) {
+  const imgs = await Promise.all(sources.map(loadImg));
+  if (!imgs.length) return;
+  setFrame(imgs[0]);
+  IM = imgs.map((img, k) => Object.assign({ name: names[k], url: sources[k], img }, prep(img)));
+  if (REF) Object.assign(REF, prep(REF.img));
+  demo = isDemo; if (S.source >= 0) S.source = -1;
+  MEAN = new Uint8ClampedArray(sw * sh * 4);
+  for (let i = 0; i < MEAN.length; i++) { let s = 0; for (const m of IM) s += m.data[i]; MEAN[i] = s / IM.length; }
+  ready();
+}
+// המקור נכנס למסגרת של הגרסאות. אם אין עדיין גרסאות, הוא קובע את המסגרת
+async function loadReference(src, name) {
+  const img = await loadImg(src);
+  if (!IM.length) setFrame(img);
+  REF = Object.assign({ name, url: src, img }, prep(img));
+  ready();
+}
+function ready() { analyse(); buildPanel(); rebuild(); document.getElementById('drop').style.display = 'none'; }
+function boxBlur(src, w, h, r) {
+  if (r <= 0) return src.slice(); const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let s = 0, n = 0; for (let k = -r; k <= r; k++) { const xx = x + k; if (xx >= 0 && xx < w) { s += src[y * w + xx]; n++; } } tmp[y * w + x] = s / n; }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let s = 0, n = 0; for (let k = -r; k <= r; k++) { const yy = y + k; if (yy >= 0 && yy < h) { s += tmp[yy * w + x]; n++; } } out[y * w + x] = s / n; }
+  return out;
+}
+function normP95(a) { const N = a.length, sorted = Array.from(a).sort((x, y) => x - y), p = sorted[Math.floor(N * 0.95)] || 0, o = new Float32Array(N); if (p > 0) for (let i = 0; i < N; i++) o[i] = clamp(a[i] / p, 0, 1); return o; }
+// שונות: איפה הגרסאות לא מסכימות זו עם זו, כלומר המודל מנחש.
+// סטייה: איפה הגרסאות רחוקות מהמקור, כלומר המודל זוכר לא נכון.
+// ביטחון שגוי: עקבי בין הגרסאות ובכל זאת רחוק מהמקור, זיכרון סינתטי שהתקבע.
+function analyse() {
+  const n = IM.length, N = aw * ah, r = Math.round(S.blur), sum = new Float32Array(N), sq = new Float32Array(N);
+  const blurred = IM.map(m => boxBlur(m.lum, aw, ah, r));
+  for (const b of blurred) for (let i = 0; i < N; i++) { sum[i] += b[i]; sq[i] += b[i] * b[i]; }
+  const sd = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const mu = sum[i] / Math.max(1, n); sd[i] = Math.sqrt(Math.max(0, sq[i] / Math.max(1, n) - mu * mu)); }
+  const VAR = n > 1 ? normP95(sd) : new Float32Array(N);
+  let DEV = null;
+  if (REF && n) { const rb = boxBlur(REF.lum, aw, ah, r), d = new Float32Array(N); for (const b of blurred) for (let i = 0; i < N; i++) d[i] += Math.abs(b[i] - rb[i]) / n; DEV = normP95(d); }
+  hasDev = !!DEV;
+  const dr = DEV ? S.drive : 0;
+  VMAP = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const v = VAR[i], e = DEV ? DEV[i] : 0; VMAP[i] = dr === 0 ? v : dr === 1 ? e : dr === 2 ? Math.max(v, e) : e * (1 - v); }
+  if (dr === 3) VMAP = normP95(VMAP);
+}
+function bil(arr, w, h, fx, fy) {
+  fx = clamp(fx, 0, w - 1.001); fy = clamp(fy, 0, h - 1.001); const x = Math.floor(fx), y = Math.floor(fy), u = fx - x, v = fy - y, i = y * w + x;
+  return lerp(lerp(arr[i], arr[i + 1], u), lerp(arr[i + w], arr[i + w + 1], u), v);
+}
+const disorder = (x, y) => Math.pow(smooth(S.lo, S.hi, clamp(bil(VMAP, aw, ah, x / RW * aw - 0.5, y / RH * ah - 0.5) * S.boost, 0, 1)), S.gamma);
+const srcArr = () => S.source === -2 && REF ? REF.data : S.source >= 0 && IM[S.source] ? IM[S.source].data : MEAN || REF.data;
+function sampleRGB(arr, x, y) { const px = clamp(Math.floor(x / RW * sw), 0, sw - 1), py = clamp(Math.floor(y / RH * sh), 0, sh - 1), i = (py * sw + px) * 4; return [arr[i], arr[i + 1], arr[i + 2]]; }
+function sampleCell(arr, x, y, s) { const o = s / 4, P = [[0, 0], [o, o], [-o, o], [o, -o], [-o, -o]]; let r = 0, g = 0, b = 0; for (const [dx, dy] of P) { const c = sampleRGB(arr, x + dx, y + dy); r += c[0]; g += c[1]; b += c[2]; } return [r / 5, g / 5, b / 5]; }
+const lum = c => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+
+/* ===== בנייה: סדר איפה שיש הסכמה, שבירה איפה שיש המצאה ===== */
+function lattice() {
+  const s = S.step, pts = [];
+  if (S.order === 0) {
+    const a = S.angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), n = Math.ceil(Math.hypot(RW, RH) / 2 / s) + 1;
+    for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) { const u = i * s, v = j * s, x = RW / 2 + u * ca - v * sa, y = RH / 2 + u * sa + v * ca; if (x > -s && x < RW + s && y > -s && y < RH + s) pts.push([x, y]); }
+  } else if (S.order === 1) {
+    const h = s * Math.sqrt(3) / 2; for (let j = 0; j * h < RH + h; j++) for (let i = -1; i * s < RW + s; i++) pts.push([i * s + (j & 1 ? s / 2 : 0), j * h]);
+  } else { for (let y = s / 2; y < RH + s; y += s) for (let x = s / 2; x < RW + s; x += s) pts.push([x, y]); }
+  return pts;
+}
+function rebuild() {
+  if (!IM.length && !REF) return;
+  const t0 = performance.now(), R = mulberry32(S.seed * 2654435761 >>> 0 || 1), g = gaussFn(R), N1 = makeNoise(S.seed), s = S.step;
+  const arr = srcArr(), G = new Grid(RW, RH, s), lut = paletteLUT(PALETTES[S.palette] || PALETTES['default']), ink = hexRgb(S.ink), acc = hexRgb(S.accent);
+  const X = [], Y = [], Rr = [], A = [], C = [];
+  const toneOf = c => { let t = 1 - lum(c); if (S.invert) t = 1 - t; return Math.pow(clamp(t, 0, 1), S.tone); };
+  const colorOf = (c, t, a, broken) => {
+    let col = S.color === 0 ? c : S.color === 1 ? lut[Math.round(clamp(1 - t, 0, 1) * 63)] : ink;
+    if (S.color === 0 && S.sat !== 1) { const L = lum(col) * 255; col = col.map(v => L + (v - L) * S.sat); }
+    if (broken && S.mark > 0) col = col.map((v, k) => lerp(v, acc[k], S.mark * a));
+    return col;
+  };
+  const push = (x, y, r, a, col) => { X.push(x); Y.push(y); Rr.push(r); A.push(a); C.push(col); };
+  const free = [];
+  for (const [x, y] of lattice()) {
+    const a = disorder(clamp(x, 0, RW), clamp(y, 0, RH)), c = sampleCell(arr, clamp(x, 0, RW - 1), clamp(y, 0, RH - 1), s), t = toneOf(c);
+    const r = s / 2 * 0.98 * lerp(S.dMin, S.dMax, t);
+    if (R() < clamp(a * S.strength, 0, 1)) free.push([x, y, a, c, t, r]);
+    else if (r >= 0.3) { G.add(x, y, r); push(x, y, r, 0, colorOf(c, t, 0, false)); }
+  }
+  // תא שהשתחרר שומר את כמות הדיו שלו, הזיכרון, ומאבד את המקום שלו, המסמך
+  const eB = s * s / 4 * (S.bMin * S.bMin + S.bMin * S.bMax + S.bMax * S.bMax) / 3;
+  for (const [x, y, a, c, t, r] of free) {
+    if (R() < S.drop * a) continue;
+    const k = Math.floor(r * r / Math.max(eB, 1e-6) + R());
+    const sp = s * (0.5 + S.spread * a * 3);
+    const cx = x + (N1(x / 90, y / 90) - 0.5) * sp * 4, cy = y + (N1(x / 90 + 31, y / 90 + 17) - 0.5) * sp * 4;
+    const band = Math.floor(y / (s * S.bandH)), off = (N1(band * 0.37, S.seed * 0.11) - 0.5) * 2 * S.shift * s * 12 * a;
+    let px = x, py = y;
+    for (let j = 0; j < k; j++) {
+      const rb = s / 2 * lerp(S.bMin, S.bMax, R());
+      for (let tries = 0; tries < 5; tries++) {
+        let nx, ny;
+        if (S.breakM === 0) { nx = x + (R() * 2 - 1) * sp; ny = y + (R() * 2 - 1) * sp; }
+        else if (S.breakM === 1) { nx = cx + g() * s * 0.45; ny = cy + g() * s * 0.45; }
+        else if (S.breakM === 2) { const L = Math.min(sp * 3, s * 0.35 * Math.pow(Math.max(R(), 1e-4), -1 / 1.3)), th = R() * TAU; nx = px + Math.cos(th) * L; ny = py + Math.sin(th) * L; }
+        else { nx = x + off + (R() - 0.5) * s; ny = y + (R() - 0.5) * s * 0.3; }
+        if (nx < -rb || nx > RW + rb || ny < -rb || ny > RH + rb) continue;
+        if (G.fits(nx, ny, rb, S.gap)) { G.add(nx, ny, rb); push(nx, ny, rb, a, colorOf(c, t, a, true)); px = nx; py = ny; break; }
+      }
+    }
+  }
+  // מיון לפי צבע מכומת, כדי לצייר כל צבע במסלול אחד
+  const n = X.length, keys = new Map();
+  for (let i = 0; i < n; i++) { const c = C[i], k = (c[0] >> 3) << 10 | (c[1] >> 3) << 5 | (c[2] >> 3); if (!keys.has(k)) keys.set(k, []); keys.get(k).push(i); }
+  const D = { n, X: new Float32Array(n), Y: new Float32Array(n), R: new Float32Array(n), A: new Float32Array(n), P1: new Float32Array(n), P2: new Float32Array(n), groups: [], ms: 0, broken: 0 };
+  const ph = mulberry32(S.seed + 5); let w = 0;
+  for (const [, idx] of keys) {
+    const c = C[idx[0]]; D.groups.push({ start: w, end: w + idx.length, color: rgbHex(c) });
+    for (const i of idx) { D.X[w] = X[i]; D.Y[w] = Y[i]; D.R[w] = Rr[i]; D.A[w] = A[i]; D.P1[w] = ph() * TAU; D.P2[w] = ph() * TAU; if (A[i] > 0) D.broken++; w++; }
+  }
+  D.ms = performance.now() - t0; DOTS = D; dirty = true; info();
+}
+
+/* ===== ציור ===== */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let dirty = true, dpr = 1;
+function resize() { dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); dirty = true; }
+new ResizeObserver(resize).observe(cv);
+function frameOf(cw, ch, pad = 32) { const sc = Math.min((cw - pad * 2) / RW, (ch - pad * 2) / RH); return [sc, (cw - RW * sc) / 2, (ch - RH * sc) / 2]; }
+function drawDots(c, cw, ch, scale, time, moving, pad) {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = S.bg; c.fillRect(0, 0, cw * scale, ch * scale);
+  if (!DOTS) return;
+  const [sc, ox, oy] = frameOf(cw, ch, pad); c.setTransform(scale * sc, 0, 0, scale * sc, scale * ox, scale * oy);
+  c.save(); c.beginPath(); c.rect(0, 0, RW, RH); c.clip();
+  const D = DOTS, wr = moving ? S.wander : 0, ws = S.wspeed * TAU;
+  for (const gr of D.groups) {
+    c.fillStyle = gr.color; c.beginPath();
+    for (let i = gr.start; i < gr.end; i++) {
+      let x = D.X[i], y = D.Y[i]; const r = D.R[i];
+      if (wr && D.A[i] > 0) { const a = D.A[i] * wr; x += a * Math.sin(time * ws + D.P1[i]); y += a * Math.cos(time * ws * 0.83 + D.P2[i]); }
+      c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU);
+    }
+    c.fill();
+  }
+  c.restore();
+}
+function drawRaster(c, cw, ch, scale, kind) {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = S.bg; c.fillRect(0, 0, cw * scale, ch * scale);
+  const w = kind === 'map' ? aw : sw, h = kind === 'map' ? ah : sh, img = new ImageData(w, h);
+  if (kind === 'map') { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = disorder((x + 0.5) / w * RW, (y + 0.5) / h * RH), i = (y * w + x) * 4, v = 255 * (1 - a); img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255; } }
+  else img.data.set(srcArr());
+  const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h; tmp.getContext('2d').putImageData(img, 0, 0);
+  const [sc, ox, oy] = frameOf(cw, ch); c.imageSmoothingEnabled = kind !== 'map'; c.setTransform(scale, 0, 0, scale, 0, 0); c.drawImage(tmp, ox, oy, RW * sc, RH * sc);
+}
+function loop(now) {
+  const moving = S.motion === 1 && S.view === 0;
+  if ((IM.length || REF) && (dirty || moving)) {
+    if (S.view === 0) drawDots(ctx, cv.clientWidth, cv.clientHeight, dpr, now / 1000, moving);
+    else drawRaster(ctx, cv.clientWidth, cv.clientHeight, dpr, S.view === 1 ? 'map' : 'src');
+    dirty = false;
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ===== פאנל ===== */
+const panel = document.getElementById('panel');
+let timer = 0, aTimer = 0;
+const later = () => { clearTimeout(timer); timer = setTimeout(rebuild, 60); };
+const laterAnalyse = () => { clearTimeout(aTimer); aTimer = setTimeout(() => { analyse(); rebuild(); }, 80); };
+function sec(t) { const h = document.createElement('h3'); h.textContent = t; panel.appendChild(h); }
+function range(l, k, min, max, step, on = later) {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `<div class="lab"><span>${l}</span><span class="val">${S[k]}</span></div><input type="range" min="${min}" max="${max}" step="${step}" value="${S[k]}">`;
+  const inp = r.querySelector('input'), val = r.querySelector('.val'); inp.oninput = () => { S[k] = +inp.value; val.textContent = inp.value; on(); }; panel.appendChild(r);
+}
+function select(l, k, opts, on = later) {
+  const r = document.createElement('div'); r.className = 'row'; const isStr = typeof S[k] === 'string';
+  r.innerHTML = `<div class="lab"><span>${l}</span></div><select>${opts.map((o, i) => `<option value="${isStr ? o : i}"${(isStr ? o === S[k] : i === S[k]) ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+  r.querySelector('select').onchange = e => { S[k] = isStr ? e.target.value : +e.target.value; on(); }; panel.appendChild(r);
+}
+function color(l, k, on = later) {
+  const r = document.createElement('div'); r.className = 'row'; r.innerHTML = `<div class="lab"><span>${l}</span></div><input type="color" value="${S[k]}">`;
+  r.querySelector('input').oninput = e => { S[k] = e.target.value; on(); }; panel.appendChild(r);
+}
+function buttons(list) { const d = document.createElement('div'); d.className = 'btns'; for (const [t, f] of list) { const b = document.createElement('button'); b.textContent = t; b.onclick = f; d.appendChild(b); } panel.appendChild(d); return d; }
+function info() {
+  const el = document.getElementById('info'); if (!el) return;
+  if (!IM.length) { el.textContent = 'לא נטענו גרסאות.'; return; }
+  el.innerHTML = `${IM.length} גרסאות${demo ? ' (דמו מופשט לבדיקה בלבד)' : ''}${IM.length < 2 ? '. צריך לפחות שתיים כדי למדוד הסכמה.' : ''}<br>` +
+    (REF ? `מקור: ${REF.name}<br>` : '') + (S.drive > 0 && !hasDev ? 'המדד דורש מקור וגרסאות. בינתיים מוצגת השונות.<br>' : '') +
+    (DOTS ? `${DOTS.n.toLocaleString('he-IL')} נקודות, מהן ${DOTS.broken.toLocaleString('he-IL')} שבורות · ${DOTS.ms.toFixed(0)}ms` : '');
+}
+function buildPanel() {
+  panel.innerHTML = `<a href="index.html" style="color:var(--mute);font-size:12px">20 השיטות</a><h1 style="margin-top:8px">זיכרון סינתטי</h1><div class="lead">אותו רגע, הרבה גרסאות. איפה שהן מסכימות הנקודות שומרות על סדר של מסמך. איפה שהן נפרדות, המודל ממציא, והסדר נשבר. הטון נשמר, המקום לא.</div>`;
+  sec('גרסאות');
+  buttons([['טעינת גרסאות', () => document.getElementById('file').click()], ['טעינת המקור', () => document.getElementById('refFile').click()], ['דמו מופשט', makeDemo]]);
+  const th = document.createElement('div'); th.id = 'thumbs'; panel.appendChild(th);
+  if (REF) { const im = document.createElement('img'); im.src = REF.url; im.title = 'המקור: ' + REF.name; im.style.outlineStyle = 'double'; if (S.source === -2) im.className = 'on'; im.onclick = () => { S.source = S.source === -2 ? -1 : -2; buildPanel(); rebuild(); }; th.appendChild(im); }
+  IM.forEach((m, i) => { const im = document.createElement('img'); im.src = m.url; im.title = m.name; if (S.source === i) im.className = 'on'; im.onclick = () => { S.source = S.source === i ? -1 : i; buildPanel(); rebuild(); }; th.appendChild(im); });
+  const inf = document.createElement('div'); inf.className = 'info'; inf.id = 'info'; panel.appendChild(inf);
+  select('מקור הטון והצבע', 'source', ['ממוצע כל הגרסאות', ...IM.map((m, i) => `גרסה ${i + 1}`), ...(REF ? ['המקור ההיסטורי'] : [])], () => { });
+  // הערך -1 הוא הממוצע, ולכן מתאימים את האינדקס
+  panel.lastChild.querySelector('select').selectedIndex = S.source === -2 ? IM.length + 1 : S.source + 1;
+  panel.lastChild.querySelector('select').onchange = e => { const k = e.target.selectedIndex; S.source = REF && k === IM.length + 1 ? -2 : k - 1; buildPanel(); rebuild(); };
+  select('תצוגה', 'view', ['נקודות', 'מפת המצאה', 'תמונת הטון'], () => { dirty = true; });
+  sec('מה נחשב המצאה');
+  select('מדד', 'drive', ['שונות בין הגרסאות', 'סטייה מהמקור', 'שתיהן', 'ביטחון שגוי'], laterAnalyse);
+  range('טשטוש לפני השוואה', 'blur', 0, 12, 1, laterAnalyse);
+  range('סף תחתון', 'lo', 0, 1, 0.01); range('סף עליון', 'hi', 0, 1, 0.01);
+  range('הגברה', 'boost', 0.2, 3, 0.05); range('עקומה', 'gamma', 0.2, 3, 0.05);
+  sec('סדר: המסמך');
+  select('רשת', 'order', ['רסטר מסובב', 'משושה', 'רשת ישרה']);
+  range('צעד', 'step', 4, 30, 0.5); range('זווית', 'angle', 0, 90, 1);
+  range('גודל מזערי', 'dMin', 0, 0.6, 0.01); range('גודל מרבי', 'dMax', 0.3, 1, 0.01);
+  range('עקומת טון', 'tone', 0.3, 3, 0.05); select('טון', 'invert', ['כהה גדול', 'בהיר גדול']);
+  range('מרווח', 'gap', 0, 3, 0.1);
+  sec('שבירה: ההמצאה');
+  select('שיטה', 'breakM', ['פיזור', 'אשכולות', 'מעוף לוי', 'גליץ סריקה']);
+  range('עוצמה', 'strength', 0, 2, 0.01); range('מרחק נדידה', 'spread', 0, 3, 0.01);
+  range('שכחה', 'drop', 0, 1, 0.01); range('גודל שבור מזערי', 'bMin', 0.05, 0.8, 0.01); range('גודל שבור מרבי', 'bMax', 0.05, 1, 0.01);
+  range('הסטת סריקה', 'shift', 0, 3, 0.01); range('גובה פס', 'bandH', 1, 12, 1);
+  range('seed', 'seed', 1, 999, 1);
+  sec('צבע');
+  select('צבע', 'color', ['מהתמונה', 'פלטה לפי טון', 'דיו אחד']);
+  select('פלטה', 'palette', Object.keys(PALETTES)); color('דיו', 'ink'); color('רקע', 'bg', () => { dirty = true; });
+  range('רוויה', 'sat', 0, 1.5, 0.01);
+  range('סימון ההמצאה', 'mark', 0, 1, 0.01); color('צבע סימון', 'accent');
+  sec('תנועה');
+  select('תנועה', 'motion', ['עצורה', 'פועלת'], () => { dirty = true; });
+  range('נדידת השבורים', 'wander', 0, 10, 0.1, () => { }); range('מהירות', 'wspeed', 0, 2, 0.01, () => { });
+  sec('ייצוא');
+  buttons([['PNG', () => exportPNG()], ['SVG', exportSVG], ['מפת המצאה', () => exportPNG('map')], ['הגדרות', exportSettings], ['טעינת הגדרות', importSettings], ['איפוס', () => { const keep = S.source; Object.assign(S, JSON.parse(JSON.stringify(DEF))); S.source = keep; buildPanel(); analyse(); rebuild(); }]]);
+  info();
+}
+
+/* ===== ייצוא ===== */
+function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+function exportPNG(kind) {
+  const c = document.createElement('canvas'); c.width = RW * 2; c.height = RH * 2; const x = c.getContext('2d');
+  if (kind === 'map') drawRaster(x, RW, RH, 2, 'map'); else drawDots(x, RW, RH, 2, 0, false, 0);
+  c.toBlob(b => download(kind === 'map' ? 'invention-map.png' : 'synthetic-memory.png', b));
+}
+function exportSVG() {
+  if (!DOTS) return; const D = DOTS; let body = '';
+  for (const g of D.groups) { body += `<g fill="${g.color}">`; for (let i = g.start; i < g.end; i++) body += `<circle cx="${D.X[i].toFixed(2)}" cy="${D.Y[i].toFixed(2)}" r="${D.R[i].toFixed(2)}"/>`; body += '</g>\n'; }
+  download('synthetic-memory.svg', new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${RW} ${RH}" width="${RW}" height="${RH}"><rect width="${RW}" height="${RH}" fill="${S.bg}"/>\n${body}</svg>`], { type: 'image/svg+xml' }));
+}
+function exportSettings() { download('memory-settings.json', new Blob([JSON.stringify({ type: 'memorySettings', version: 1, settings: S }, null, 2)], { type: 'application/json' })); }
+function importSettings() {
+  const f = document.createElement('input'); f.type = 'file'; f.accept = '.json';
+  f.onchange = async () => { try { const o = JSON.parse(await f.files[0].text()); Object.assign(S, o.settings || {}); if (S.source >= IM.length || (S.source === -2 && !REF)) S.source = -1; buildPanel(); analyse(); rebuild(); } catch (e) { alert('קובץ הגדרות לא תקין'); } };
+  f.click();
+}
+
+/* ===== קלט ===== */
+const fileIn = document.getElementById('file'), stage = document.getElementById('stage');
+async function fromFiles(files) {
+  files = [...files].filter(f => f.type.startsWith('image/')).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  if (!files.length) return;
+  await loadImages(files.map(f => URL.createObjectURL(f)), files.map(f => f.name), false);
+}
+fileIn.onchange = e => { fromFiles(e.target.files); fileIn.value = ''; };
+const refIn = document.getElementById('refFile');
+refIn.onchange = e => { const f = e.target.files[0]; if (f) loadReference(URL.createObjectURL(f), f.name); refIn.value = ''; };
+stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('over'); });
+stage.addEventListener('dragleave', () => stage.classList.remove('over'));
+stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('over'); fromFiles(e.dataTransfer.files); });
+
+// דמו מופשט לבדיקת המנגנון בלבד: אלמנטים קבועים (אופק, מבנה) ואלמנטים שמשתנים בין הגרסאות (דמויות, עצים, עננים)
+function makeDemo() {
+  const urls = [], names = [], w = 960, h = 540;
+  for (let v = 0; v <= 20; v++) {
+    const R = mulberry32(v === 20 ? 4242 : 1000 + v), c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+    const sky = x.createLinearGradient(0, 0, 0, h * 0.62); sky.addColorStop(0, `hsl(${35 + R() * 10},25%,${78 + R() * 6}%)`); sky.addColorStop(1, '#efe4cf');
+    x.fillStyle = sky; x.fillRect(0, 0, w, h);
+    for (let k = 0; k < 3; k++) { x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.ellipse(R() * w, 40 + R() * 120, 60 + R() * 90, 14 + R() * 18, 0, 0, TAU); x.fill(); }
+    const hz = h * (0.62 + (R() - 0.5) * 0.015);
+    x.fillStyle = '#b59a72'; x.fillRect(0, hz, w, h - hz);
+    x.fillStyle = '#5c4630'; const bx = w * 0.5 + (R() - 0.5) * 8; x.fillRect(bx - 150, hz - 150, 300, 150); x.beginPath(); x.arc(bx, hz - 150, 90, Math.PI, 0); x.fill();
+    x.fillStyle = '#3a2c1e'; for (let k = 0; k < 5; k++) x.fillRect(bx - 120 + k * 56, hz - 110, 18, 60);
+    for (let k = 0; k < 3; k++) { const tx = R() * w, ts = 40 + R() * 50; x.fillStyle = '#4b5a3a'; x.beginPath(); x.arc(tx, hz - ts * 1.3, ts * 0.6, 0, TAU); x.fill(); x.fillRect(tx - 4, hz - ts, 8, ts); }
+    const people = 3 + Math.floor(R() * 6);
+    for (let k = 0; k < people; k++) { const px = R() * w, py = hz + 20 + R() * (h - hz - 40), s = 0.6 + (py - hz) / (h - hz); x.fillStyle = '#231a12'; x.beginPath(); x.arc(px, py - 52 * s, 9 * s, 0, TAU); x.fill(); x.fillRect(px - 9 * s, py - 42 * s, 18 * s, 42 * s); }
+    if (v === 20) { x.fillStyle = '#231a12'; x.fillRect(bx - 230, hz - 60, 40, 60); }
+    urls.push(c.toDataURL('image/png')); names.push(v === 20 ? 'demo_original' : `demo_${v + 1}`);
+  }
+  const refUrl = urls.pop(), refName = names.pop();
+  loadImages(urls, names, true).then(() => loadReference(refUrl, refName));
+}
+
+buildPanel(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

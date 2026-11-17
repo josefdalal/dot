@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>נקודות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3efe6;--ink:#141414;--mute:#8a857b;--line:#d9d3c6}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Hebrew',system-ui,sans-serif}
+header{padding:40px 48px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+h1{font-weight:900;font-stretch:75%;font-size:72px;margin:0;line-height:.85;letter-spacing:-.01em}
+.sub{color:var(--mute);margin-top:12px;font-size:15px}
+.controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:13px}
+.controls label{display:flex;gap:8px;align-items:center;color:var(--mute)}
+select,button{font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:3px;padding:5px 9px;cursor:pointer}
+button:hover,select:hover{border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px 24px;padding:4px 48px 72px}
+@media(max-width:1400px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}header,.grid{padding-left:24px;padding-right:24px}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}h1{font-size:52px}}
+.card{cursor:pointer}
+.card canvas{width:100%;aspect-ratio:16/9;display:block}
+.cap{display:flex;gap:10px;align-items:baseline;margin-top:10px}
+.num{font-weight:900;font-stretch:75%;font-size:22px;min-width:26px}
+.name{font-weight:700;font-size:15px}
+.en{color:var(--mute);font-size:12px;direction:ltr;margin-inline-start:auto;white-space:nowrap}
+.desc{color:var(--mute);font-size:12.5px;margin-top:3px;line-height:1.5;padding-inline-start:36px}
+.card:hover .name{text-decoration:underline;text-underline-offset:3px}
+
+#view{position:fixed;inset:0;display:none;grid-template-columns:330px 1fr;background:var(--bg);z-index:10}
+#view.open{display:grid}
+#panel{overflow:auto;padding:22px 22px 40px;border-inline-end:1px solid var(--line);font-size:13px}
+#stage{position:relative;overflow:hidden}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ph{display:flex;align-items:baseline;gap:10px}
+.ph .num{font-size:34px}
+.ph .name{font-size:20px;font-weight:800}
+.pdesc{color:var(--mute);line-height:1.5;margin:6px 0 14px}
+.nav{display:flex;gap:6px;margin-bottom:6px}
+.nav button{flex:1}
+h3{font-size:11px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin:22px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.row{margin:9px 0}
+.row .lab{display:flex;justify-content:space-between;margin-bottom:3px}
+.row .val{color:var(--mute);direction:ltr;font-variant-numeric:tabular-nums}
+.row input[type=range]{width:100%;accent-color:var(--ink);margin:0;direction:ltr}
+.row select{width:100%}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.info{color:var(--mute);font-size:12px;margin-top:10px;direction:rtl}
+.hint{position:absolute;bottom:14px;left:18px;font-size:12px;color:var(--mute);pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>נקודות</h1>
+    <div class="sub">20 שיטות לפיזור עיגולים: גודל, צורה, ריכוז, פרקטל ושבירה</div>
+  </div>
+  <div class="controls">
+    <label>פלטה <select id="gPalette"></select></label>
+    <label>צבע לפי <select id="gMap"></select></label>
+    <label>תנועה <select id="gMotion"><option value="1">פועלת</option><option value="0">עצורה</option></select></label>
+    <a href="memory.html" style="color:var(--ink);font-size:13px">זיכרון סינתטי</a>
+    <button id="gExport">ייצוא הגדרות</button>
+    <button id="gImport">ייבוא הגדרות</button>
+    <input type="file" id="gFile" accept=".json" hidden>
+  </div>
+</header>
+<main class="grid" id="grid"></main>
+
+<div id="view">
+  <aside id="panel"></aside>
+  <div id="stage"><canvas id="full"></canvas><div class="hint">חצים: מעבר בין שיטות · Esc: חזרה</div></div>
+</div>
+
+<script>
+'use strict';
+/* ===== בסיס ===== */
+const W = 1200, H = 675, B = 48, TAU = Math.PI * 2, CAP = 14000;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gaussFn(R) { return () => { let u = 0, v = 0; while (u === 0) u = R(); v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); }; }
+
+function makeNoise(seed) {
+  const r = mulberry32(seed * 7919 + 13), p = new Uint8Array(512), perm = [];
+  for (let i = 0; i < 256; i++) perm[i] = i;
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+  const G = [[1, 1], [-1, 1], [1, -1], [-1, -1], [1.41, 0], [-1.41, 0], [0, 1.41], [0, -1.41]];
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+  const dot = (h, x, y) => { const g = G[h & 7]; return g[0] * x + g[1] * y; };
+  function n(x, y) {
+    const X = Math.floor(x), Y = Math.floor(y), xf = x - X, yf = y - Y, xi = X & 255, yi = Y & 255;
+    const aa = p[p[xi] + yi], ab = p[p[xi] + yi + 1], ba = p[p[xi + 1] + yi], bb = p[p[xi + 1] + yi + 1];
+    const u = fade(xf), v = fade(yf);
+    const x1 = lerp(dot(aa, xf, yf), dot(ba, xf - 1, yf), u);
+    const x2 = lerp(dot(ab, xf, yf - 1), dot(bb, xf - 1, yf - 1), u);
+    return lerp(x1, x2, v);
+  }
+  function fbm(x, y, oct = 3) {
+    let s = 0, a = 1, f = 1, t = 0;
+    for (let o = 0; o < oct; o++) { s += a * n(x * f + o * 17.3, y * f + o * 9.1); t += a; a *= 0.5; f *= 2; }
+    return clamp(0.5 + 0.75 * s / t, 0, 1);
+  }
+  return { n, fbm };
+}
+
+/* ===== צבע: אינטרפולציה ב OKLCH, כמו ב tz ===== */
+const toLin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const toSrgb = c => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+function hexToLch(hex) {
+  const h = hex.replace('#', '');
+  let r = toLin(parseInt(h.slice(0, 2), 16) / 255), g = toLin(parseInt(h.slice(2, 4), 16) / 255), b = toLin(parseInt(h.slice(4, 6), 16) / 255);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  const Bb = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+  const C = Math.hypot(A, Bb);
+  return [L, C, C < 0.02 ? NaN : Math.atan2(Bb, A)];
+}
+function lchToHex(L, C, h) {
+  if (isNaN(h)) h = 0;
+  const a = C * Math.cos(h), b = C * Math.sin(h);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  const rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+  return '#' + rgb.map(v => Math.round(clamp(toSrgb(clamp(v, 0, 1)), 0, 1) * 255).toString(16).padStart(2, '0')).join('');
+}
+function paletteLUT(stops, n) {
+  const P = stops.map(hexToLch), out = [];
+  if (P.length === 1) P.push(P[0]);
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n * (P.length - 1), k = Math.min(P.length - 2, Math.floor(u)), t = u - k;
+    const A = P[k], Bc = P[k + 1];
+    let ha = A[2], hb = Bc[2];
+    if (isNaN(ha)) ha = hb; if (isNaN(hb)) hb = ha;
+    let h = NaN;
+    if (!isNaN(ha)) { let d = hb - ha; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; h = ha + d * t; }
+    out.push(lchToHex(lerp(A[0], Bc[0], t), lerp(A[1], Bc[1], t), h));
+  }
+  return out;
+}
+const PALETTES = {
+  'default': { stops: ['#0b1d51', '#3a6ea5', '#ff6b6b'], bg: '#f3efe6' },
+  'S_001': { stops: ['#000000', '#3b4044', '#485d6a'], bg: '#f3efe6' },
+  'S_002': { stops: ['#208df3', '#27912e', '#d629b1'], bg: '#f3efe6' },
+  'ember': { stops: ['#2b0a3d', '#b8336a', '#ff9e3d', '#ffe8a3'], bg: '#120a14' },
+  'intro': { stops: ['#6b6b6b', '#000000', '#d6d6d6'], bg: '#ffffff' },
+  'דיו': { stops: ['#141414'], bg: '#f3efe6' },
+  'נייר על שחור': { stops: ['#f3efe6', '#8a857b'], bg: '#141414' }
+};
+const MAPS = ['טבעי לשיטה', 'אקראי', 'אופקי', 'אנכי', 'רדיוס', 'מרכזי'];
+
+/* ===== רשת מרחבית לבדיקת חפיפה ===== */
+class Grid {
+  constructor(cs) { this.cs = cs; this.cols = Math.ceil(W / cs) + 1; this.rows = Math.ceil(H / cs) + 1; this.cells = Array.from({ length: this.cols * this.rows }, () => []); this.x = []; this.y = []; this.r = []; }
+  range(x, y, R) { const cs = this.cs; return [clamp(Math.floor((x - R) / cs), 0, this.cols - 1), clamp(Math.floor((x + R) / cs), 0, this.cols - 1), clamp(Math.floor((y - R) / cs), 0, this.rows - 1), clamp(Math.floor((y + R) / cs), 0, this.rows - 1)]; }
+  add(x, y, r) { const id = this.x.length; this.x.push(x); this.y.push(y); this.r.push(r); const [x0, x1, y0, y1] = this.range(x, y, r); for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) this.cells[j * this.cols + i].push(id); }
+  clear(x, y, R) { let m = R; const [x0, x1, y0, y1] = this.range(x, y, R); for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) { const c = this.cells[j * this.cols + i]; for (let k = 0; k < c.length; k++) { const id = c[k]; const d = Math.hypot(x - this.x[id], y - this.y[id]) - this.r[id]; if (d < m) m = d; } } return m; }
+  fits(x, y, r, gap) { return this.clear(x, y, r + gap) >= r + gap - 1e-6; }
+  fit(x, y, cap) { let R = Math.min(cap, this.cs * 1.5); for (;;) { const c = this.clear(x, y, R); if (c < R || R >= cap) return Math.min(c, cap); R = Math.min(cap, R * 2); } }
+}
+// cand(a) מחזיר [x, y, t, extra] או null. rad(x, y, c, a) מחזיר רדיוס רצוי.
+function pack(o) {
+  const G = new Grid(o.cs || 24), out = [], gap = o.gap || 0, max = Math.min(o.max, CAP);
+  for (let a = 0; a < o.attempts && out.length < max; a++) {
+    const c = o.cand(a); if (!c) continue;
+    const x = c[0], y = c[1];
+    let r = o.rad ? o.rad(x, y, c, a) : c[3];
+    if (!(r > 0)) continue;
+    if (o.fit) { const cl = G.fit(x, y, r + gap) - gap; if (cl < o.rMin) continue; r = Math.min(r, cl); }
+    else if (!G.fits(x, y, r, gap)) continue;
+    G.add(x, y, r); out.push([x, y, r, c[2]]);
+  }
+  return out;
+}
+const inFrame = (x, y, r) => x > -r && x < W + r && y > -r && y < H + r;
+
+/* ===== פרמטרים ===== */
+const rg = (l, min, max, step, d) => ({ t: 'r', l, min, max, step, d });
+const sl = (l, o, d = 0) => ({ t: 's', l, o, d });
+const SEED = () => rg('seed', 1, 999, 1, 1);
+const RMIN = d => rg('רדיוס מזערי', 0.5, 20, 0.5, d);
+const RMAX = d => rg('רדיוס מרבי', 1, 40, 0.5, d);
+const GAP = d => rg('מרווח', 0, 10, 0.5, d);
+const MAX = d => rg('כמות מרבית', 100, 8000, 50, d);
+const lohi = p => [Math.min(p.rMin, p.rMax), Math.max(p.rMin, p.rMax)];
+
+/* ===== 20 השיטות ===== */
+const DEFS = [
+{
+  id: 'poisson', he: 'פואסון', en: 'Poisson disk',
+  desc: 'פיזור אקראי בלי חפיפה, גדלים לפי התפלגות. הבסיס של tz.',
+  params: { seed: SEED(), max: MAX(2600), rMin: RMIN(3), rMax: RMAX(14), gap: GAP(1.5), bias: rg('נטייה לקטנים', 0.2, 5, 0.1, 2) },
+  gen(p, R) { const [lo, hi] = lohi(p); return pack({ cand: () => [R() * W, R() * H], rad: () => lo + (hi - lo) * Math.pow(R(), p.bias), max: p.max, attempts: p.max * 30, gap: p.gap, cs: hi * 2 + p.gap }); }
+},
+{
+  id: 'grid', he: 'רשת', en: 'Grid',
+  desc: 'סדר מלא: צעד קבוע וגודל אחיד, עם שונות לבחירה.',
+  params: { seed: SEED(), step: rg('צעד', 8, 80, 1, 26), fill: rg('מילוי', 0.05, 1, 0.01, 0.7), sizeVar: rg('שונות גודל', 0, 1, 0.01, 0), shift: sl('שורות', ['ישרות', 'מוזזות'], 0) },
+  gen(p, R) {
+    const out = [], s = p.step, nx = Math.ceil(W / s) + 1, ny = Math.ceil(H / s) + 1, x0 = (W - (nx - 1) * s) / 2, y0 = (H - (ny - 1) * s) / 2;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const x = x0 + i * s + (p.shift && j % 2 ? s / 2 : 0), y = y0 + j * s;
+      out.push([x, y, s / 2 * p.fill * (1 - p.sizeVar * R()), y / H]);
+    }
+    return out;
+  }
+},
+{
+  id: 'hex', he: 'משושה', en: 'Hex lattice',
+  desc: 'רשת משושית צפופה, הגודל נע בגלים מהמרכז.',
+  params: { seed: SEED(), step: rg('צעד', 8, 80, 1, 22), fill: rg('מילוי', 0.05, 1, 0.01, 0.85), wave: rg('עומק גל', 0, 1, 0.01, 0.6), freq: rg('תדירות גל', 0.5, 20, 0.5, 5) },
+  gen(p) {
+    const out = [], s = p.step, h = s * Math.sqrt(3) / 2, dm = Math.hypot(W, H) / 2;
+    for (let j = -1; j * h < H + h; j++) for (let i = -1; i * s < W + s; i++) {
+      const x = i * s + (j & 1 ? s / 2 : 0), y = j * h, d = Math.hypot(x - W / 2, y - H / 2) / dm;
+      const r = s / 2 * p.fill * (1 - p.wave * 0.5 * (1 + Math.sin(d * p.freq * TAU)));
+      if (r > 0.3) out.push([x, y, r, d]);
+    }
+    return out;
+  }
+},
+{
+  id: 'halftone', he: 'רסטר', en: 'Halftone',
+  desc: 'רשת מסובבת, הגודל נקבע לפי שדה: מרכז, כיוון, רעש או טבעות.',
+  params: { seed: SEED(), step: rg('צעד', 6, 60, 1, 16), angle: rg('זווית', 0, 90, 1, 15), field: sl('שדה', ['מרכזי', 'ליניארי', 'רעש', 'טבעות'], 2), scale: rg('קנה מידה', 0.5, 10, 0.1, 3), lo: rg('גודל בסיס', 0, 0.6, 0.01, 0.04), invert: sl('כיוון', ['רגיל', 'הפוך'], 0) },
+  gen(p, R, N) {
+    const out = [], s = p.step, a = p.angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), n = Math.ceil(Math.hypot(W, H) / 2 / s) + 1, dm = Math.hypot(W, H) / 2;
+    for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) {
+      const u = i * s, v = j * s, x = W / 2 + u * ca - v * sa, y = H / 2 + u * sa + v * ca;
+      if (!inFrame(x, y, s)) continue;
+      const d = Math.hypot(x - W / 2, y - H / 2);
+      let f = p.field === 0 ? 1 - d / dm : p.field === 1 ? x / W : p.field === 2 ? smooth(0.22, 0.78, N.fbm(x / W * p.scale, y / W * p.scale, 3)) : 0.5 + 0.5 * Math.cos(d / H * p.scale * TAU);
+      if (p.invert) f = 1 - f;
+      const r = s / 2 * 0.96 * (p.lo + (1 - p.lo) * f);
+      if (r > 0.35) out.push([x, y, r, f]);
+    }
+    return out;
+  }
+},
+{
+  id: 'phyllotaxis', he: 'פילוטקסיס', en: 'Phyllotaxis',
+  desc: 'זווית הזהב: כל נקודה מסובבת ביחס לקודמתה, כמו בחמנייה.',
+  params: { seed: SEED(), count: rg('כמות', 100, 6000, 10, 1500), spread: rg('פיזור', 2, 30, 0.1, 8.6), angle: rg('סטיית זווית', -3, 3, 0.01, 0), mode: sl('גודל', ['גדל החוצה', 'קטן החוצה', 'קבוע', 'גל'], 0), rMin: RMIN(1.5), rMax: RMAX(7.5) },
+  gen(p) {
+    const out = [], ga = (137.50776 + p.angle) * Math.PI / 180, n = Math.min(p.count, CAP);
+    for (let i = 0; i < n; i++) {
+      const rho = p.spread * Math.sqrt(i + 0.5), th = i * ga, x = W / 2 + rho * Math.cos(th), y = H / 2 + rho * Math.sin(th), f = i / Math.max(1, n - 1);
+      const r = p.mode === 0 ? lerp(p.rMin, p.rMax, f) : p.mode === 1 ? lerp(p.rMax, p.rMin, f) : p.mode === 2 ? p.rMax : lerp(p.rMin, p.rMax, 0.5 + 0.5 * Math.sin(f * TAU * 4));
+      if (inFrame(x, y, r)) out.push([x, y, r, f]);
+    }
+    return out;
+  }
+},
+{
+  id: 'rings', he: 'טבעות', en: 'Concentric rings',
+  desc: 'טבעות סביב מרכז, לכל טבעת גודל משלה.',
+  params: { seed: SEED(), spacing: rg('מרווח טבעות', 6, 60, 1, 22), profile: sl('פרופיל', ['גדל החוצה', 'קטן החוצה', 'מתחלף', 'גל'], 0), rMin: RMIN(2), rMax: RMAX(10), gap: GAP(2), cx: rg('מרכז אופקי', 0, 1, 0.01, 0.5), cy: rg('מרכז אנכי', 0, 1, 0.01, 0.5), twist: rg('היסט טבעות', 0, 1, 0.01, 0.5) },
+  gen(p, R) {
+    const out = [], cx = p.cx * W, cy = p.cy * H, maxR = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy)), nR = Math.floor(maxR / p.spacing);
+    out.push([cx, cy, Math.max(0.5, Math.min(p.rMax, p.spacing / 2 - p.gap / 2)), 0]);
+    for (let k = 1; k <= nR && out.length < CAP; k++) {
+      const Rk = k * p.spacing, f = k / nR;
+      const base = p.profile === 0 ? lerp(p.rMin, p.rMax, f) : p.profile === 1 ? lerp(p.rMax, p.rMin, f) : p.profile === 2 ? (k % 2 ? p.rMax : p.rMin) : lerp(p.rMin, p.rMax, 0.5 + 0.5 * Math.sin(f * TAU * 3));
+      const r = Math.min(base, p.spacing / 2 - p.gap / 2); if (r < 0.4) continue;
+      const cnt = Math.floor(TAU * Rk / (2 * r + p.gap)), off = p.twist * R() * TAU;
+      for (let m = 0; m < cnt; m++) { const th = off + m * TAU / cnt, x = cx + Rk * Math.cos(th), y = cy + Rk * Math.sin(th); if (inFrame(x, y, r)) out.push([x, y, r, f]); }
+    }
+    return out;
+  }
+},
+{
+  id: 'spiral', he: 'ספירלה', en: 'Archimedean spiral',
+  desc: 'זרועות ספירליות, העיגולים מתחדדים לכיוון אחד.',
+  params: { seed: SEED(), arms: rg('זרועות', 1, 8, 1, 3), turns: rg('סיבובים', 1, 12, 0.5, 3.5), taper: rg('התחדדות', 0, 1, 0.01, 0.85), rMax: RMAX(13), gap: GAP(2), dir: sl('כיוון', ['קטנים במרכז', 'קטנים בחוץ'], 0) },
+  gen(p) {
+    const maxR = Math.hypot(W, H) / 2, thMax = p.turns * TAU, a = maxR / thMax, pts = [];
+    for (let arm = 0; arm < p.arms; arm++) {
+      let th = 0.2;
+      while (th < thMax && pts.length < CAP * 3) {
+        const rho = a * th, f = rho / maxR;
+        const r = Math.max(0.6, p.rMax * (p.dir === 0 ? 1 - p.taper + p.taper * f : 1 - p.taper * f));
+        const ang = th + arm * TAU / p.arms, x = W / 2 + rho * Math.cos(ang), y = H / 2 + rho * Math.sin(ang);
+        if (inFrame(x, y, r)) pts.push([x, y, f, r]);
+        th += (2 * r + p.gap) / Math.sqrt(rho * rho + a * a);
+      }
+    }
+    pts.sort((u, v) => u[2] - v[2]);
+    return pack({ cand: i => pts[i], max: CAP, attempts: pts.length, gap: p.gap * 0.5, cs: p.rMax * 2 + p.gap });
+  }
+},
+{
+  id: 'density', he: 'צפיפות מדורגת', en: 'Density gradient',
+  desc: 'הריכוז עולה בכיוון אחד, והגודל יכול להתהפך מולו.',
+  params: { seed: SEED(), angle: rg('כיוון', 0, 360, 1, 0), gamma: rg('חדות', 0.3, 6, 0.1, 2.2), link: rg('גודל מול צפיפות', -1, 1, 0.01, 0.6), rMin: RMIN(2.5), rMax: RMAX(12), gap: GAP(1.5), max: MAX(3000) },
+  gen(p, R) {
+    const [lo, hi] = lohi(p), a = p.angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), e = Math.abs(W / 2 * ca) + Math.abs(H / 2 * sa);
+    return pack({
+      cand: () => { const x = R() * W, y = R() * H, f = clamp(((x - W / 2) * ca + (y - H / 2) * sa) / e * 0.5 + 0.5, 0, 1); return R() < Math.pow(f, p.gamma) ? [x, y, f] : null; },
+      rad: (x, y, c) => { const u = R(); const s = p.link >= 0 ? lerp(u, 1 - c[2], p.link) : lerp(u, c[2], -p.link); return lerp(lo, hi, s); },
+      max: p.max, attempts: p.max * 60, gap: p.gap, cs: hi * 2 + p.gap
+    });
+  }
+},
+{
+  id: 'clusters', he: 'אשכולות', en: 'Gaussian clusters',
+  desc: 'מוקדי ריכוז, גדולים במרכז האשכול וקטנים בשוליו, או להפך.',
+  params: { seed: SEED(), clusters: rg('אשכולות', 1, 40, 1, 9), sigma: rg('רוחב אשכול', 10, 300, 1, 70), bg: rg('רקע מפוזר', 0, 0.6, 0.01, 0.05), sizeBy: rg('גודל לפי מרכז', -1, 1, 0.01, 0.7), rMin: RMIN(2), rMax: RMAX(14), gap: GAP(1.5), max: MAX(2600) },
+  gen(p, R) {
+    const [lo, hi] = lohi(p), g = gaussFn(R), m = 60, C = [];
+    let tw = 0;
+    for (let k = 0; k < p.clusters; k++) { const w = 0.3 + R(); tw += w; C.push({ x: m + R() * (W - 2 * m), y: m + R() * (H - 2 * m), s: p.sigma * (0.4 + R() * 1.2), w: tw }); }
+    return pack({
+      cand: () => {
+        if (R() < p.bg) return [R() * W, R() * H, R(), 0];
+        const u = R() * tw; let k = 0; while (C[k].w < u) k++;
+        const c = C[k], dx = g() * c.s, dy = g() * c.s, x = c.x + dx, y = c.y + dy;
+        if (!inFrame(x, y, 0)) return null;
+        return [x, y, (k + 0.5) / C.length, Math.exp(-(dx * dx + dy * dy) / (2 * c.s * c.s))];
+      },
+      rad: (x, y, c) => { const u = R(); const s = p.sizeBy >= 0 ? lerp(u, c[3], p.sizeBy) : lerp(u, 1 - c[3], -p.sizeBy); return lerp(lo, hi, s); },
+      max: p.max, attempts: p.max * 40, gap: p.gap, cs: hi * 2 + p.gap
+    });
+  }
+},
+{
+  id: 'noise', he: 'שדה רעש', en: 'Noise stipple',
+  desc: 'הצפיפות והגודל נגזרים משדה רעש רציף.',
+  params: { seed: SEED(), scale: rg('קנה מידה', 0.5, 12, 0.1, 3), threshold: rg('סף', 0, 1, 0.01, 0.48), contrast: rg('ניגודיות', 1, 20, 0.5, 5), oct: rg('אוקטבות', 1, 5, 1, 3), sizeBy: sl('גודל', ['לפי הרעש', 'אקראי', 'הפוך'], 0), rMin: RMIN(2), rMax: RMAX(11), gap: GAP(1.5), max: MAX(3000) },
+  gen(p, R, N) {
+    const [lo, hi] = lohi(p), w = 0.5 / p.contrast;
+    return pack({
+      cand: () => { const x = R() * W, y = R() * H, f = N.fbm(x / W * p.scale, y / W * p.scale, p.oct), pr = smooth(p.threshold - w, p.threshold + w, f); return R() < pr ? [x, y, f, pr] : null; },
+      rad: (x, y, c) => lerp(lo, hi, p.sizeBy === 0 ? c[3] : p.sizeBy === 1 ? R() : 1 - c[3]),
+      max: p.max, attempts: p.max * 50, gap: p.gap, cs: hi * 2 + p.gap
+    });
+  }
+},
+{
+  id: 'packing', he: 'מילוי מקסימלי', en: 'Maximal packing',
+  desc: 'כל עיגול גדל עד שהוא נוגע בשכן. התפלגות גדלים פרקטלית.',
+  params: { seed: SEED(), rMin: rg('רדיוס מזערי', 0.5, 10, 0.5, 1.5), rMax: rg('רדיוס מרבי', 10, 320, 1, 150), gap: GAP(2), max: MAX(3000), decay: rg('דעיכת גודל', 0, 4, 0.05, 0), frame: sl('גבול', ['מלבן', 'עיגול'], 0) },
+  gen(p, R) {
+    const Rb = H * 0.48, attempts = Math.min(p.max, CAP) * 40;
+    const out = pack({
+      cand: () => { const x = R() * W, y = R() * H; if (p.frame === 1 && Math.hypot(x - W / 2, y - H / 2) > Rb - p.rMin) return null; return [x, y]; },
+      rad: (x, y, c, a) => { const cap = p.rMin + (p.rMax - p.rMin) * Math.pow(1 - a / attempts, p.decay); const b = p.frame === 1 ? Rb - Math.hypot(x - W / 2, y - H / 2) : Math.min(x, W - x, y, H - y); return Math.min(cap, b); },
+      fit: true, rMin: p.rMin, max: p.max, attempts, gap: p.gap, cs: 14
+    });
+    let top = p.rMin * 1.01; for (const c of out) if (c[2] > top) top = c[2];
+    const l0 = Math.log(p.rMin), l1 = Math.log(top);
+    for (const c of out) c[3] = clamp((Math.log(c[2]) - l0) / (l1 - l0), 0, 1);
+    return out;
+  }
+},
+{
+  id: 'quadtree', he: 'עץ ארבע', en: 'Quadtree',
+  desc: 'תאים מתחלקים לארבעה שוב ושוב, לפי הסתברות ושדה רעש.',
+  params: { seed: SEED(), depth: rg('עומק', 1, 8, 1, 5), minDepth: rg('עומק מזערי', 0, 4, 1, 1), split: rg('הסתברות פיצול', 0, 1, 0.01, 0.6), noiseInf: rg('השפעת רעש', 0, 1, 0.01, 0.6), scale: rg('קנה מידה רעש', 0.5, 8, 0.1, 2), base: rg('תאי בסיס בגובה', 1, 9, 1, 3), fill: rg('מילוי', 0.2, 1, 0.01, 0.86), empty: rg('תאים ריקים', 0, 0.8, 0.01, 0.08) },
+  gen(p, R, N) {
+    const out = [], cell = H / p.base, cols = Math.ceil(W / cell), x0 = (W - cols * cell) / 2;
+    const sub = (x, y, s, d) => {
+      if (out.length >= CAP) return;
+      const nv = N.fbm((x + s / 2) / W * p.scale, (y + s / 2) / W * p.scale, 3);
+      const pr = p.split * (1 - p.noiseInf) + p.noiseInf * smooth(0.3, 0.7, nv);
+      if (d < p.depth && (d < p.minDepth || R() < pr)) { const h = s / 2; sub(x, y, h, d + 1); sub(x + h, y, h, d + 1); sub(x, y + h, h, d + 1); sub(x + h, y + h, h, d + 1); }
+      else if (R() >= p.empty) out.push([x + s / 2, y + s / 2, s / 2 * p.fill, d / p.depth]);
+    };
+    for (let j = 0; j < p.base; j++) for (let i = 0; i < cols; i++) sub(x0 + i * cell, j * cell, cell, 0);
+    return out;
+  }
+},
+{
+  id: 'chaos', he: 'משחק הכאוס', en: 'Chaos game',
+  desc: 'קפיצה חוזרת לעבר קודקוד אקראי. משולש סירפינסקי ומשפחתו.',
+  params: { seed: SEED(), vertices: rg('קודקודים', 3, 8, 1, 3), ratio: rg('יחס קפיצה', 0.3, 0.75, 0.005, 0.5), rule: sl('כלל', ['חופשי', 'לא אותו קודקוד', 'לא קודקוד שכן'], 0), rot: rg('סיבוב', 0, 360, 1, 0), stretch: rg('מתיחה אופקית', 1, 1.8, 0.01, 1.15), r: rg('רדיוס', 0.8, 10, 0.1, 2.4), sizeVar: rg('שונות גודל', 0, 1, 0.01, 0.4), gap: GAP(0.6), max: MAX(4500) },
+  gen(p, R) {
+    const n = p.vertices, Rv = H * 0.49, V = [];
+    for (let k = 0; k < n; k++) { const a = p.rot * Math.PI / 180 + k * TAU / n - Math.PI / 2; V.push([W / 2 + Rv * Math.cos(a) * p.stretch, H / 2 + Rv * Math.sin(a) + (n === 3 ? Rv * 0.22 : 0)]); }
+    let x = W / 2, y = H / 2, last = -1, it = 0;
+    const step = () => {
+      let k, tries = 0;
+      do { k = Math.floor(R() * n); tries++; } while (tries < 30 && ((p.rule === 1 && k === last) || (p.rule === 2 && last >= 0 && (k === (last + 1) % n || k === (last + n - 1) % n))));
+      x += (V[k][0] - x) * p.ratio; y += (V[k][1] - y) * p.ratio; last = k;
+    };
+    for (; it < 30; it++) step();
+    return pack({ cand: () => { step(); return [x, y, n > 1 ? last / (n - 1) : 0]; }, rad: () => p.r * (1 - p.sizeVar * R()), max: p.max, attempts: p.max * 60, gap: p.gap, cs: p.r * 2 + p.gap + 1 });
+  }
+},
+{
+  id: 'cantor', he: 'אבק קנטור', en: 'Cantor dust',
+  desc: 'כל מלבן שומר רק חלקים ממנו, שוב ושוב, עד אבק.',
+  params: { seed: SEED(), depth: rg('עומק', 1, 6, 1, 4), keep: rg('חלק נשמר', 0.15, 0.48, 0.005, 0.4), pattern: sl('תבנית', ['ארבע פינות', 'פינות ומרכז', 'שטיח'], 0), jitter: rg('שבירה', 0, 1, 0.01, 0), fill: rg('מילוי', 0.2, 1, 0.01, 0.9) },
+  gen(p, R) {
+    const out = [], m = 20;
+    const rec = (x, y, w, h, d) => {
+      if (out.length >= CAP) return;
+      if (d === p.depth) { const cx = x + w / 2, cy = y + h / 2; out.push([cx, cy, Math.min(w, h) / 2 * p.fill, (cx / W + cy / H) / 2]); return; }
+      const kx = clamp(p.keep * (1 + p.jitter * (R() - 0.5)), 0.08, 0.49), ky = clamp(p.keep * (1 + p.jitter * (R() - 0.5)), 0.08, 0.49);
+      const w2 = w * kx, h2 = h * ky, X = [x, x + (w - w2) / 2, x + w - w2], Y = [y, y + (h - h2) / 2, y + h - h2];
+      for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) {
+        const corner = i !== 1 && j !== 1, center = i === 1 && j === 1;
+        const keepIt = p.pattern === 0 ? corner : p.pattern === 1 ? corner || center : !center;
+        if (keepIt) rec(X[i], Y[j], w2, h2, d + 1);
+      }
+    };
+    rec(m, m, W - 2 * m, H - 2 * m, 0);
+    return out;
+  }
+},
+{
+  id: 'vicsek', he: 'ויצ\'ק', en: 'Vicsek fractal',
+  desc: 'צלב בתוך צלב, או אלכסון בתוך אלכסון.',
+  params: { seed: SEED(), tiles: rg('אריחים', 1, 3, 1, 1), depth: rg('עומק', 1, 5, 1, 4), variant: sl('צורה', ['צלב', 'אלכסון'], 0), fill: rg('מילוי', 0.2, 1, 0.01, 0.9) },
+  gen(p) {
+    const out = [], side = Math.min(H * 0.94, W * 0.94 / p.tiles);
+    const rec = (x, y, s, d, cx, cy) => {
+      if (out.length >= CAP) return;
+      if (d === p.depth) { const px = x + s / 2, py = y + s / 2; out.push([px, py, s / 2 * p.fill, Math.hypot(px - cx, py - cy) / (side / Math.SQRT2)]); return; }
+      const t = s / 3;
+      for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) {
+        const k = p.variant === 0 ? (i === 1 || j === 1) && !(i !== 1 && j !== 1) || (i === 1 && j === 1) : (i !== 1 && j !== 1) || (i === 1 && j === 1);
+        if (k) rec(x + i * t, y + j * t, t, d + 1, cx, cy);
+      }
+    };
+    const total = side * p.tiles, x0 = (W - total) / 2, y0 = (H - side) / 2;
+    for (let k = 0; k < p.tiles; k++) rec(x0 + k * side, y0, side, 0, x0 + k * side + side / 2, y0 + side / 2);
+    return out;
+  }
+},
+{
+  id: 'nested', he: 'עיגול בתוך עיגול', en: 'Nested circles',
+  desc: 'כל עיגול מכיל טבעת של עיגולים קטנים, שוב ושוב.',
+  params: { seed: SEED(), roots: rg('שורשים', 1, 3, 1, 1), depth: rg('עומק', 1, 5, 1, 3), children: rg('ילדים', 3, 12, 1, 7), cs: rg('יחס ילד', 0.15, 0.5, 0.005, 0.3), center: sl('מרכז', ['עם מרכז', 'בלי מרכז'], 0), rot: rg('סיבוב לרמה', 0, 60, 1, 12), shrink: rg('כיווץ עלה', 0.4, 1, 0.01, 0.9) },
+  gen(p) {
+    const out = [], rr = Math.min(H * 0.47, W / (2 * p.roots) * 0.94), rot = p.rot * Math.PI / 180;
+    const rec = (x, y, Rr, d, ph, t) => {
+      if (out.length >= CAP) return;
+      if (d === p.depth) { out.push([x, y, Rr * p.shrink, t]); return; }
+      const cR = Rr * p.cs, ring = Rr - cR;
+      for (let m = 0; m < p.children; m++) { const a = ph + m * TAU / p.children; rec(x + ring * Math.cos(a), y + ring * Math.sin(a), cR, d + 1, ph + rot, d === 0 ? (m + 0.5) / p.children : t); }
+      const inner = Rr - 2 * cR;
+      if (p.center === 0 && inner > cR * 0.3) rec(x, y, inner * 0.95, d + 1, ph + rot, d === 0 ? 1 : t);
+    };
+    const step = W / p.roots;
+    for (let k = 0; k < p.roots; k++) rec(step * (k + 0.5), H / 2, rr, 0, -Math.PI / 2, 0);
+    return out;
+  }
+},
+{
+  id: 'flow', he: 'זרימה', en: 'Flow field',
+  desc: 'קווי זרימה בשדה כיוונים, העיגולים מתחדדים לאורכם.',
+  params: { seed: SEED(), field: sl('שדה', ['רעש', 'מערבולת', 'גלים'], 0), scale: rg('קנה מידה', 0.5, 8, 0.1, 2), r: rg('רדיוס בסיס', 1.5, 16, 0.5, 5), taper: rg('התחדדות', 0, 1, 0.01, 0.75), sizeNoise: rg('שונות גודל', 0, 1, 0.01, 0.35), len: rg('אורך קו', 5, 120, 1, 40), gap: GAP(1.5), seeds: rg('זרעים', 50, 3000, 10, 900) },
+  gen(p, R, N) {
+    const G = new Grid(p.r * 2 + p.gap + 1), out = [];
+    const theta = (x, y) => {
+      const nv = N.fbm(x / W * p.scale, y / W * p.scale, 2);
+      return p.field === 0 ? nv * TAU * 2 : p.field === 1 ? Math.atan2(y - H / 2, x - W / 2) + Math.PI / 2 + (nv - 0.5) * 1.6 : Math.sin(y / H * p.scale * Math.PI) * 0.9 + (nv - 0.5) * 0.8;
+    };
+    const rad0 = (x, y) => p.r * (1 - p.sizeNoise * N.fbm(x / W * p.scale * 2 + 9, y / W * p.scale * 2 + 9, 2));
+    for (let s = 0; s < p.seeds && out.length < CAP; s++) {
+      const x = R() * W, y = R() * H, r = rad0(x, y);
+      if (!G.fits(x, y, r, p.gap)) continue;
+      const t = R(), L = p.len * (0.5 + R());
+      G.add(x, y, r); out.push([x, y, r, t]);
+      for (const dir of [1, -1]) {
+        let px = x, py = y, pr = r;
+        for (let k = 1; k <= L; k++) {
+          const nr = rad0(px, py) * (1 - p.taper * k / L); if (nr < 0.7) break;
+          const th = theta(px, py), st = (pr + nr + p.gap) * 1.0005, nx = px + dir * Math.cos(th) * st, ny = py + dir * Math.sin(th) * st;
+          if (!inFrame(nx, ny, 0) || !G.fits(nx, ny, nr, p.gap)) break;
+          G.add(nx, ny, nr); out.push([nx, ny, nr, t]); px = nx; py = ny; pr = nr;
+        }
+      }
+    }
+    return out;
+  }
+},
+{
+  id: 'disorder', he: 'סדר ושבירה', en: 'Order to disorder',
+  desc: 'רשת שמתפרקת בהדרגה: תזוזה, גודל ונשירה.',
+  params: { seed: SEED(), step: rg('צעד', 10, 60, 1, 24), fill: rg('מילוי', 0.2, 1, 0.01, 0.75), dir: sl('כיוון השבירה', ['מימין לשמאל', 'מהמרכז', 'לפי רעש'], 0), power: rg('עקומה', 0.3, 4, 0.05, 1.6), jitter: rg('תזוזה', 0, 2, 0.01, 1), sizeChaos: rg('שבירת גודל', 0, 1, 0.01, 0.8), drop: rg('נשירה', 0, 1, 0.01, 0.5) },
+  gen(p, R, N) {
+    const out = [], s = p.step, g = gaussFn(R), dm = Math.hypot(W, H) / 2;
+    for (let y = s / 2; y < H; y += s) for (let x = s / 2; x < W; x += s) {
+      const f = p.dir === 0 ? 1 - x / W : p.dir === 1 ? Math.hypot(x - W / 2, y - H / 2) / dm : smooth(0.3, 0.7, N.fbm(x / W * 2.5, y / W * 2.5, 3));
+      const a = Math.pow(clamp(f, 0, 1), p.power);
+      if (R() < p.drop * a * a) continue;
+      out.push([x + g() * p.jitter * s * a * 0.5, y + g() * p.jitter * s * a * 0.5, s / 2 * p.fill * (1 - p.sizeChaos * a * R()), a]);
+    }
+    return out;
+  }
+},
+{
+  id: 'edge', he: 'מרחק מהשוליים', en: 'Edge distance',
+  desc: 'בתוך צורה: גדולים בפנים וקטנים בשוליים, או להפך.',
+  params: { seed: SEED(), shape: sl('צורה', ['גוש', 'טבעת', 'כוכב', 'סהר'], 0), deform: rg('עיוות', 0, 1, 0.01, 0.35), scale: rg('גודל צורה', 0.3, 1, 0.01, 0.9), gamma: rg('עקומה', 0.3, 3, 0.05, 1), invert: sl('כיוון', ['גדולים בפנים', 'גדולים בשוליים'], 0), rMin: RMIN(1.5), rMax: RMAX(16), gap: GAP(1.5), max: MAX(3000) },
+  gen(p, R, N) {
+    const [lo, hi] = lohi(p), cx = W / 2, cy = H / 2, Rs = H / 2 * p.scale;
+    const pr = th => 1 + p.deform * (N.fbm(Math.cos(th) * 1.5 + 5, Math.sin(th) * 1.5 + 5, 3) - 0.5) * 1.6;
+    const sd = (x, y) => {
+      const dx = x - cx, dy = y - cy, rho = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
+      if (p.shape === 0) return Rs * pr(th) - rho;
+      if (p.shape === 1) { const R2 = Rs * pr(th); return Math.min(rho - R2 * 0.5, R2 - rho); }
+      if (p.shape === 2) return (Rs * (0.55 + 0.45 * Math.pow(Math.abs(Math.cos(2.5 * (th + Math.PI / 2))), 1.5)) * pr(th) - rho) * 0.8;
+      return Math.min(Rs - rho, Math.hypot(x - (cx + Rs * 0.45), y - (cy - Rs * 0.15)) - Rs * 0.82);
+    };
+    let dMax = 1;
+    for (let j = 0; j < 68; j++) for (let i = 0; i < 120; i++) { const d = sd((i + 0.5) * W / 120, (j + 0.5) * H / 68); if (d > dMax) dMax = d; }
+    return pack({
+      cand: () => { const x = R() * W, y = R() * H, d = sd(x, y); if (d <= lo) return null; return [x, y, d / dMax, d]; },
+      rad: (x, y, c) => { const f = Math.pow(clamp(c[2], 0, 1), p.gamma); const r = Math.min(lerp(lo, hi, p.invert ? 1 - f : f), c[3]); return r >= lo * 0.6 ? r : 0; },
+      max: p.max, attempts: p.max * 40, gap: p.gap, cs: hi * 2 + p.gap
+    });
+  }
+},
+{
+  id: 'levy', he: 'מעוף לוי', en: 'Lévy flight',
+  desc: 'הליכה אקראית עם קפיצות ארוכות נדירות. ריכוזים בכמה קני מידה.',
+  params: { seed: SEED(), walkers: rg('הולכים', 1, 8, 1, 2), alpha: rg('אלפא', 0.5, 3, 0.05, 1.4), minStep: rg('צעד מזערי', 2, 40, 0.5, 7), boundary: sl('גבול', ['עוטף', 'מחזיר'], 0), rMin: RMIN(1.5), rMax: RMAX(9), bias: rg('נטייה לקטנים', 0.2, 5, 0.1, 2.5), gap: GAP(1), max: MAX(3000) },
+  gen(p, R) {
+    const [lo, hi] = lohi(p), Wk = [], attempts = Math.min(p.max, CAP) * 30;
+    for (let k = 0; k < p.walkers; k++) Wk.push([R() * W, R() * H]);
+    const bound = (v, m) => { if (p.boundary === 0) return ((v % m) + m) % m; while (v < 0 || v > m) v = v < 0 ? -v : 2 * m - v; return v; };
+    const out = pack({
+      cand: a => {
+        const w = Wk[a % p.walkers], L = Math.min(W * 0.6, p.minStep * Math.pow(Math.max(R(), 1e-6), -1 / p.alpha)), th = R() * TAU;
+        w[0] = bound(w[0] + Math.cos(th) * L, W); w[1] = bound(w[1] + Math.sin(th) * L, H);
+        return [w[0], w[1], a / attempts];
+      },
+      rad: () => lo + (hi - lo) * Math.pow(R(), p.bias), max: p.max, attempts, gap: p.gap, cs: hi * 2 + p.gap
+    });
+    out.forEach((c, i) => c[3] = i / Math.max(1, out.length - 1));
+    return out;
+  }
+}
+];
+
+/* ===== מצב ===== */
+const S = { palette: 'default', map: 0, motion: 1, wander: 2, wspeed: 0.35, pulse: 6, pspeed: 0.4, mouseR: 70, mouseS: 1, lut: [], bg: '#f3efe6' };
+const V = DEFS.map((def, i) => ({ def, i, params: defaults(def), raw: [], n: 0, ms: 0, dirty: true, visible: false }));
+function defaults(def) { const o = {}; for (const k in def.params) o[k] = def.params[k].d; return o; }
+
+function setPalette(name) { S.palette = PALETTES[name] ? name : 'default'; const P = PALETTES[S.palette]; S.lut = paletteLUT(P.stops, B); S.bg = P.bg; }
+
+function generate(v) {
+  const t0 = performance.now(), p = v.params, R = mulberry32(p.seed * 2654435761 >>> 0 || 1), N = makeNoise(p.seed);
+  let raw = v.def.gen(p, R, N) || [];
+  if (raw.length > CAP) raw = raw.slice(0, CAP);
+  let rmin = Infinity, rmax = -Infinity;
+  for (const c of raw) { if (c[2] < rmin) rmin = c[2]; if (c[2] > rmax) rmax = c[2]; }
+  for (const c of raw) if (c[3] == null || isNaN(c[3])) c[3] = rmax > rmin ? (c[2] - rmin) / (rmax - rmin) : 0.5;
+  v.raw = raw; v.rr = [rmin, rmax]; v.ms = performance.now() - t0;
+  const R2 = mulberry32(p.seed + 77); v.rand = raw.map(() => R2());
+  build(v);
+}
+
+// מיון לפי דלי צבע, כדי לצייר כל צבע במסלול אחד
+function build(v) {
+  const raw = v.raw, n = raw.length, dm = Math.hypot(W, H) / 2, [rmin, rmax] = v.rr || [0, 1];
+  const bk = new Int32Array(n), cnt = new Int32Array(B + 1);
+  for (let i = 0; i < n; i++) {
+    const c = raw[i];
+    let t = S.map === 0 ? c[3] : S.map === 1 ? v.rand[i] : S.map === 2 ? c[0] / W : S.map === 3 ? c[1] / H : S.map === 4 ? (rmax > rmin ? (c[2] - rmin) / (rmax - rmin) : 0.5) : Math.hypot(c[0] - W / 2, c[1] - H / 2) / dm;
+    const b = clamp(Math.floor(clamp(t, 0, 1) * B), 0, B - 1); bk[i] = b; cnt[b + 1]++;
+  }
+  for (let b = 0; b < B; b++) cnt[b + 1] += cnt[b];
+  const start = cnt.slice(), X = new Float32Array(n), Y = new Float32Array(n), Rr = new Float32Array(n), P1 = new Float32Array(n), P2 = new Float32Array(n), pos = cnt.slice();
+  const ph = mulberry32(v.params.seed + 5);
+  for (let i = 0; i < n; i++) { const k = pos[bk[i]]++; X[k] = raw[i][0]; Y[k] = raw[i][1]; Rr[k] = raw[i][2]; P1[k] = ph() * TAU; P2[k] = ph() * TAU; }
+  v.set = { n, X, Y, R: Rr, P1, P2, start, DX: new Float32Array(n), DY: new Float32Array(n), VX: new Float32Array(n), VY: new Float32Array(n) };
+  v.n = n; v.dirty = true;
+}
+
+/* ===== ציור ===== */
+function draw(ctx, v, cw, ch, dpr, time, moving, phys) {
+  const s = v.set; if (!s) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = S.bg; ctx.fillRect(0, 0, cw * dpr, ch * dpr);
+  const sc = Math.min(cw / W, ch / H), ox = (cw - W * sc) / 2, oy = (ch - H * sc) / 2;
+  ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * ox, dpr * oy);
+  const wr = moving ? S.wander : 0, pa = moving ? S.pulse / 100 : 0, ws = S.wspeed * TAU, ps = S.pspeed * TAU;
+  for (let b = 0; b < B; b++) {
+    const a = s.start[b], e = s.start[b + 1]; if (a === e) continue;
+    ctx.fillStyle = S.lut[b]; ctx.beginPath();
+    for (let i = a; i < e; i++) {
+      let x = s.X[i], y = s.Y[i], r = s.R[i];
+      if (moving) { x += wr * Math.sin(time * ws + s.P1[i]); y += wr * Math.cos(time * ws * 0.83 + s.P2[i]); r *= 1 + pa * Math.sin(time * ps + s.P2[i] * 1.7); }
+      if (phys) { x += s.DX[i]; y += s.DY[i]; }
+      if (r <= 0) continue;
+      ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU);
+    }
+    ctx.fill();
+  }
+}
+
+// קפיץ לבית ושיכוך קריטי, העכבר גוף דוחה, כמו ב tz
+const mouse = { x: 0, y: 0, on: false };
+function physics(v, dt) {
+  const s = v.set; if (!s) return;
+  const w = TAU * 2, k = w * w, c = 2 * w, sub = 2, h = dt / sub, mr = S.mouseR;
+  for (let q = 0; q < sub; q++) for (let i = 0; i < s.n; i++) {
+    let vx = s.VX[i] + (-k * s.DX[i] - c * s.VX[i]) * h, vy = s.VY[i] + (-k * s.DY[i] - c * s.VY[i]) * h;
+    let dx = s.DX[i] + vx * h, dy = s.DY[i] + vy * h;
+    if (mouse.on) {
+      const px = s.X[i] + dx - mouse.x, py = s.Y[i] + dy - mouse.y, d = Math.hypot(px, py), m = mr + s.R[i];
+      if (d < m && d > 1e-4) { const nx = px / d, ny = py / d, push = (m - d) * S.mouseS; dx += nx * push; dy += ny * push; const vn = vx * nx + vy * ny; if (vn < 0) { vx -= vn * nx; vy -= vn * ny; } }
+    }
+    s.VX[i] = vx; s.VY[i] = vy; s.DX[i] = dx; s.DY[i] = dy;
+  }
+}
+
+/* ===== גלריה ===== */
+const grid = document.getElementById('grid');
+const pad = n => String(n).padStart(2, '0');
+const io = new IntersectionObserver(es => { for (const e of es) { const v = V[+e.target.dataset.i]; v.visible = e.isIntersecting; v.dirty = true; } }, { rootMargin: '100px' });
+const ro = new ResizeObserver(es => { for (const e of es) sizeCanvas(e.target); });
+function sizeCanvas(cv) { const dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); cv._dpr = dpr; const i = cv.dataset.i; if (i != null) V[+i].dirty = true; }
+
+V.forEach(v => {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<canvas data-i="${v.i}"></canvas><div class="cap"><span class="num">${pad(v.i + 1)}</span><span class="name">${v.def.he}</span><span class="en">${v.def.en}</span></div><div class="desc">${v.def.desc}</div>`;
+  card.onclick = () => openView(v.i);
+  grid.appendChild(card);
+  v.cv = card.querySelector('canvas'); v.ctx = v.cv.getContext('2d');
+  io.observe(v.cv); ro.observe(v.cv);
+});
+
+/* ===== תצוגה מלאה ===== */
+const view = document.getElementById('view'), panel = document.getElementById('panel'), full = document.getElementById('full'), fctx = full.getContext('2d');
+let cur = -1, regenTimer = 0;
+ro.observe(full);
+
+function openView(i) { cur = (i + V.length) % V.length; view.classList.add('open'); document.body.style.overflow = 'hidden'; buildPanel(); requestAnimationFrame(() => sizeCanvas(full)); }
+function closeView() { view.classList.remove('open'); document.body.style.overflow = ''; if (cur >= 0) V[cur].dirty = true; cur = -1; }
+
+function rowRange(parent, label, def, value, on) {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `<div class="lab"><span>${label}</span><span class="val">${value}</span></div><input type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${value}">`;
+  const inp = r.querySelector('input'), val = r.querySelector('.val');
+  inp.oninput = () => { val.textContent = inp.value; on(+inp.value); };
+  parent.appendChild(r);
+}
+function rowSelect(parent, label, options, value, on) {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `<div class="lab"><span>${label}</span></div><select>${options.map((o, k) => `<option value="${k}"${k === value ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+  r.querySelector('select').onchange = e => on(+e.target.value);
+  parent.appendChild(r);
+}
+function section(t) { const h = document.createElement('h3'); h.textContent = t; panel.appendChild(h); }
+
+function buildPanel() {
+  const v = V[cur], d = v.def;
+  panel.innerHTML = `<div class="nav"><button id="pPrev">הקודם</button><button id="pBack">לגלריה</button><button id="pNext">הבא</button></div>
+  <div class="ph"><span class="num">${pad(cur + 1)}</span><span class="name">${d.he}</span></div><div class="en" style="margin:2px 0 0">${d.en}</div><div class="pdesc">${d.desc}</div>
+  <div class="btns"><button id="pSeed">seed אקראי</button><button id="pReset">איפוס</button></div><div class="info" id="pInfo"></div>`;
+  panel.querySelector('#pPrev').onclick = () => openView(cur - 1);
+  panel.querySelector('#pNext').onclick = () => openView(cur + 1);
+  panel.querySelector('#pBack').onclick = closeView;
+  panel.querySelector('#pSeed').onclick = () => { v.params.seed = 1 + Math.floor(Math.random() * 999); generate(v); buildPanel(); };
+  panel.querySelector('#pReset').onclick = () => { v.params = defaults(d); generate(v); buildPanel(); };
+  section('פרמטרים');
+  for (const k in d.params) {
+    const P = d.params[k];
+    if (P.t === 'r') rowRange(panel, P.l, P, v.params[k], x => { v.params[k] = x; schedule(v); });
+    else rowSelect(panel, P.l, P.o, v.params[k], x => { v.params[k] = x; schedule(v); });
+  }
+  section('צבע');
+  rowSelect(panel, 'פלטה', Object.keys(PALETTES), Object.keys(PALETTES).indexOf(S.palette), k => { setPalette(Object.keys(PALETTES)[k]); syncGlobals(); });
+  rowSelect(panel, 'צבע לפי', MAPS, S.map, k => { S.map = k; V.forEach(build); syncGlobals(); });
+  section('תנועה');
+  rowSelect(panel, 'תנועה', ['עצורה', 'פועלת'], S.motion, k => { S.motion = k; syncGlobals(); });
+  rowRange(panel, 'נדידה', { min: 0, max: 10, step: 0.1 }, S.wander, x => S.wander = x);
+  rowRange(panel, 'מהירות נדידה', { min: 0, max: 2, step: 0.01 }, S.wspeed, x => S.wspeed = x);
+  rowRange(panel, 'פעימה %', { min: 0, max: 40, step: 1 }, S.pulse, x => S.pulse = x);
+  rowRange(panel, 'מהירות פעימה', { min: 0, max: 2, step: 0.01 }, S.pspeed, x => S.pspeed = x);
+  rowRange(panel, 'רדיוס עכבר', { min: 10, max: 250, step: 1 }, S.mouseR, x => S.mouseR = x);
+  rowRange(panel, 'עוצמת עכבר', { min: 0, max: 1, step: 0.01 }, S.mouseS, x => S.mouseS = x);
+  section('ייצוא');
+  const ex = document.createElement('div'); ex.className = 'btns';
+  ex.innerHTML = '<button data-x="png">PNG</button><button data-x="svg">SVG</button><button data-x="json">JSON</button><button data-x="csv">CSV</button>';
+  ex.onclick = e => { const x = e.target.dataset.x; if (x) exportVariant(v, x); };
+  panel.appendChild(ex);
+  info();
+}
+function info() { const v = V[cur]; const el = document.getElementById('pInfo'); if (el && v) el.textContent = `${v.n.toLocaleString('he-IL')} עיגולים · ${v.ms.toFixed(0)}ms`; }
+function schedule(v) { clearTimeout(regenTimer); regenTimer = setTimeout(() => { generate(v); info(); }, 50); }
+
+full.addEventListener('pointermove', e => { const r = full.getBoundingClientRect(), sc = Math.min(r.width / W, r.height / H); mouse.x = (e.clientX - r.left - (r.width - W * sc) / 2) / sc; mouse.y = (e.clientY - r.top - (r.height - H * sc) / 2) / sc; mouse.on = e.pointerType === 'mouse' || e.buttons > 0; });
+full.addEventListener('pointerleave', () => mouse.on = false);
+full.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') mouse.on = false; });
+addEventListener('keydown', e => {
+  if (cur < 0 || /INPUT|SELECT/.test(document.activeElement.tagName) && e.key !== 'Escape') return;
+  if (e.key === 'Escape') closeView();
+  else if (e.key === 'ArrowLeft') openView(cur + 1);
+  else if (e.key === 'ArrowRight') openView(cur - 1);
+});
+
+/* ===== ייצוא ===== */
+function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+function colored(v) { const s = v.set, out = []; for (let b = 0; b < B; b++) for (let i = s.start[b]; i < s.start[b + 1]; i++) out.push([+s.X[i].toFixed(2), +s.Y[i].toFixed(2), +s.R[i].toFixed(2), S.lut[b]]); return out; }
+function exportVariant(v, type) {
+  const name = `${pad(v.i + 1)}_${v.def.id}`;
+  if (type === 'png') { const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2; draw(c.getContext('2d'), v, W, H, 2, 0, false, false); c.toBlob(b => download(name + '.png', b)); }
+  else if (type === 'svg') {
+    const cs = colored(v);
+    const body = cs.filter(c => inFrame(c[0], c[1], c[2])).map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="${c[3]}"/>`).join('\n');
+    download(name + '.svg', new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">\n<rect width="${W}" height="${H}" fill="${S.bg}"/>\n${body}\n</svg>`], { type: 'image/svg+xml' }));
+  }
+  else if (type === 'json') download(name + '.json', new Blob([JSON.stringify({ type: 'dots', version: 1, variant: v.def.id, ref: [W, H], params: v.params, palette: S.palette, map: MAPS[S.map], background: S.bg, circles: colored(v) })], { type: 'application/json' }));
+  else if (type === 'csv') download(name + '.csv', new Blob(['x,y,r,color\n' + colored(v).map(c => c.join(',')).join('\n')], { type: 'text/csv' }));
+}
+
+/* ===== שליטה כללית ===== */
+const gPalette = document.getElementById('gPalette'), gMap = document.getElementById('gMap'), gMotion = document.getElementById('gMotion');
+gPalette.innerHTML = Object.keys(PALETTES).map(k => `<option>${k}</option>`).join('');
+gMap.innerHTML = MAPS.map((m, k) => `<option value="${k}">${m}</option>`).join('');
+function syncGlobals() { gPalette.value = S.palette; gMap.value = S.map; gMotion.value = S.motion; document.documentElement.style.setProperty('--tile', S.bg); V.forEach(v => v.dirty = true); }
+gPalette.onchange = () => { setPalette(gPalette.value); syncGlobals(); };
+gMap.onchange = () => { S.map = +gMap.value; V.forEach(build); syncGlobals(); };
+gMotion.onchange = () => { S.motion = +gMotion.value; syncGlobals(); };
+document.getElementById('gExport').onclick = () => {
+  const o = { type: 'dotsSettings', version: 1, global: { palette: S.palette, map: S.map, motion: S.motion, wander: S.wander, wspeed: S.wspeed, pulse: S.pulse, pspeed: S.pspeed, mouseR: S.mouseR, mouseS: S.mouseS }, variants: {} };
+  V.forEach(v => o.variants[v.def.id] = v.params);
+  download('dots-settings.json', new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' }));
+};
+document.getElementById('gImport').onclick = () => document.getElementById('gFile').click();
+document.getElementById('gFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const o = JSON.parse(await f.text());
+    if (o.global) { Object.assign(S, o.global); setPalette(S.palette); }
+    V.forEach(v => { const p = o.variants && o.variants[v.def.id]; if (p) { v.params = Object.assign(defaults(v.def), p); generate(v); } else build(v); });
+    syncGlobals(); if (cur >= 0) buildPanel();
+  } catch (err) { alert('קובץ הגדרות לא תקין'); }
+  e.target.value = '';
+};
+
+/* ===== לולאה ===== */
+let last = performance.now(), frame = 0;
+function loop(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now; frame++;
+  const time = now / 1000, moving = S.motion === 1;
+  if (cur >= 0) {
+    const v = V[cur];
+    physics(v, dt);
+    draw(fctx, v, full.clientWidth, full.clientHeight, full._dpr || 1, time, moving, true);
+  } else {
+    for (const v of V) {
+      if (!v.visible || !v.set) continue;
+      if (moving ? (frame + v.i) % 2 === 0 : v.dirty) { draw(v.ctx, v, v.cv.clientWidth, v.cv.clientHeight, v.cv._dpr || 1, time, moving, false); v.dirty = false; }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+setPalette('default'); syncGlobals();
+let gi = 0;
+(function next() { if (gi < V.length) { generate(V[gi++]); setTimeout(next, 0); } })();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
